@@ -1,0 +1,3 @@
+[submodule "upstream/pinball"]
+	path = upstream/pinball
+	url = https://github.com/danieCFernandes/pinball.git

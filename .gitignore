@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+
+# Sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+*~
+
+# Editores
+.vscode/*
+!.vscode/settings.json
+.idea/
+
+# Proteus, arquivos de backup e temporários
+*.pdsbak
+*.DBK
+*.SBK
+*.LYT.bak
+
+# Saídas de build de documentação
+/site/
+docs/_build/
