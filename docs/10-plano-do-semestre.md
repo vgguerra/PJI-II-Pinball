@@ -8,41 +8,40 @@ sequência técnica segue a ordem de dependências estabelecida em
 
 ## 10.1 Calendário de encontros
 
-Aulas toda quinta-feira e uma segunda-feira a cada quinze dias. De 06/08 a 17/12 são 30 encontros
-previstos, dos quais 2 caem em feriado, restando **28 encontros úteis**.
+O semestre vai de 06/08 a 11/12, com aulas toda quinta-feira e uma segunda-feira a cada quinze dias.
+São 28 encontros previstos. Dois caem em feriado e a segunda de 10/08 foi cancelada, restando
+**25 encontros úteis**. O último é a quinta de 10/12.
 
 | # | Data | Dia | Observação |
 |---|---|---|---|
-| 1 | 06/08 | Quinta | |
-| 2 | 10/08 | Segunda | |
-| 3 | 13/08 | Quinta | |
-| 4 | 20/08 | Quinta | |
-| 5 | 24/08 | Segunda | |
-| 6 | 27/08 | Quinta | |
-| 7 | 03/09 | Quinta | |
+| 1 | 06/08 | Quinta |  |
+| - | 10/08 | Segunda | Sem aula nesta segunda |
+| 2 | 13/08 | Quinta |  |
+| 3 | 20/08 | Quinta |  |
+| 4 | 24/08 | Segunda |  |
+| 5 | 27/08 | Quinta |  |
+| 6 | 03/09 | Quinta |  |
 | - | 07/09 | Segunda | Feriado, Independência |
-| 8 | 10/09 | Quinta | |
-| 9 | 17/09 | Quinta | |
-| 10 | 21/09 | Segunda | |
-| 11 | 24/09 | Quinta | |
-| 12 | 01/10 | Quinta | |
-| 13 | 05/10 | Segunda | |
-| 14 | 08/10 | Quinta | |
-| 15 | 15/10 | Quinta | |
-| 16 | 19/10 | Segunda | |
-| 17 | 22/10 | Quinta | |
-| 18 | 29/10 | Quinta | |
+| 7 | 10/09 | Quinta |  |
+| 8 | 17/09 | Quinta |  |
+| 9 | 21/09 | Segunda |  |
+| 10 | 24/09 | Quinta |  |
+| 11 | 01/10 | Quinta |  |
+| 12 | 05/10 | Segunda |  |
+| 13 | 08/10 | Quinta |  |
+| 14 | 15/10 | Quinta |  |
+| 15 | 19/10 | Segunda |  |
+| 16 | 22/10 | Quinta |  |
+| 17 | 29/10 | Quinta |  |
 | - | 02/11 | Segunda | Feriado, Finados |
-| 19 | 05/11 | Quinta | |
-| 20 | 12/11 | Quinta | |
-| 21 | 16/11 | Segunda | |
-| 22 | 19/11 | Quinta | |
-| 23 | 26/11 | Quinta | |
-| 24 | 30/11 | Segunda | |
-| 25 | 03/12 | Quinta | |
-| 26 | 10/12 | Quinta | |
-| 27 | 14/12 | Segunda | |
-| 28 | 17/12 | Quinta | |
+| 18 | 05/11 | Quinta |  |
+| 19 | 12/11 | Quinta |  |
+| 20 | 16/11 | Segunda |  |
+| 21 | 19/11 | Quinta |  |
+| 22 | 26/11 | Quinta |  |
+| 23 | 30/11 | Segunda |  |
+| 24 | 03/12 | Quinta |  |
+| 25 | 10/12 | Quinta | Último encontro do semestre |
 
 Confira as datas contra o calendário acadêmico oficial do IFSC, principalmente semanas de avaliação e
 recessos, que podem reduzir esse total.
@@ -71,7 +70,7 @@ O semestre se divide em seis blocos, cada um com um resultado verificável ao fi
 sempre um resultado demonstrável é proteger contra o risco que mais afetou a etapa anterior: chegar
 ao fim do prazo com muitas frentes em 80%.
 
-### Sprint 0. Levantamento, encontros 1 a 3 (06/08 a 13/08)
+### Sprint 0. Levantamento, encontros 1 e 2 (06/08 a 13/08)
 
 **Objetivo:** saber exatamente o que existe e em que estado.
 
@@ -89,7 +88,12 @@ compras fechada.
 hardware montado nem de material comprado. É o melhor uso possível das primeiras semanas, enquanto
 qualquer compra ainda estaria em trânsito.
 
-### Sprint 1. Correção do hardware, encontros 4 a 7 (20/08 a 03/09)
+**Sprint curto.** Com o cancelamento da segunda de 10/08, restam apenas dois encontros aqui, 06/08 e
+13/08. Leitura da documentação e contato com a turma anterior não dependem de estar em sala, então
+vale resolvê-los fora do horário de aula e reservar o encontro de 13/08 para o levantamento no
+Proteus e o fechamento da lista de compras.
+
+### Sprint 1. Correção do hardware, encontros 3 a 6 (20/08 a 03/09)
 
 **Objetivo:** deixar o projeto eletrônico correto no papel antes de energizar nada.
 
@@ -106,7 +110,7 @@ expansores em endereços distintos.
 **Marco de segunda (24/08):** apresentar ao professor o diagnóstico dos problemas encontrados e as
 correções propostas. Esse é um bom momento para validar as decisões antes de comprar componente.
 
-### Sprint 2. Bancada, encontros 8 a 11 (10/09 a 24/09)
+### Sprint 2. Bancada, encontros 7 a 10 (10/09 a 24/09)
 
 **Objetivo:** fechar o caminho completo de sensor até LED, com hardware real.
 
@@ -126,7 +130,7 @@ marco de fato verificável do semestre.
 **Marco de segunda (21/09):** demonstrar o caminho fechado e atualizar a documentação com o que
 divergiu do previsto.
 
-### Sprint 3. Solenoides, encontros 12 a 16 (01/10 a 19/10)
+### Sprint 3. Solenoides, encontros 11 a 15 (01/10 a 19/10)
 
 **Objetivo:** resolver a parte que a etapa anterior não chegou a projetar.
 
@@ -147,7 +151,7 @@ energizar. Esta é a etapa com risco real de dano, e vale uma revisão externa.
 **Cuidado principal:** testar sempre uma solenoide isolada primeiro. Um erro de tempo de pulso
 replicado em dez bobinas queima dez bobinas.
 
-### Sprint 4. Lógica do jogo, encontros 17 a 22 (22/10 a 19/11)
+### Sprint 4. Lógica do jogo, encontros 16 a 21 (22/10 a 19/11)
 
 **Objetivo:** transformar hardware que responde em um jogo que se joga.
 
@@ -162,14 +166,14 @@ replicado em dez bobinas queima dez bobinas.
 
 **Entrega:** partida completa jogável, mesmo que sobre a bancada e sem a mesa montada.
 
-**Marco de segunda (19/10 e 16/11):** na primeira, alinhar as regras do jogo e a estrutura do código.
-Na segunda, demonstrar a partida completa.
+**Marco de segunda (16/11):** demonstrar a partida completa. É a penúltima segunda do semestre, então
+serve também para decidir o que ainda cabe no Sprint 5.
 
 **Ponto de decisão:** com a latência do flipper medida, decidir se a migração para ESP32 se justifica.
 Se a resposta estiver consistente, não migre. Ver
 [9.3](09-pendencias-e-roadmap.md#93-sobre-a-migração-para-esp32-com-rtos).
 
-### Sprint 5. Montagem e ajuste, encontros 23 a 28 (26/11 a 17/12)
+### Sprint 5. Montagem e ajuste, encontros 22 a 25 (26/11 a 10/12)
 
 **Objetivo:** integrar tudo na mesa física e ajustar a jogabilidade.
 
@@ -183,8 +187,15 @@ Se a resposta estiver consistente, não migre. Ver
 
 **Entrega:** pinball montado e jogável, documentação atualizada e relatório entregue.
 
-**Marcos de segunda (30/11 e 14/12):** na primeira, revisão do estado da montagem e corte de escopo
-se necessário. Na segunda, ensaio da apresentação final.
+**Marco de segunda (30/11):** revisão do estado da montagem e corte de escopo. É a última segunda do
+semestre, então o que não estiver encaminhado aqui provavelmente não entra.
+
+**Atenção ao aperto deste sprint.** Com o fim em 11/12, restam apenas quatro encontros para montagem,
+calibragem, teste com jogadores e relatório. Não há folga para retrabalho mecânico. Duas medidas
+reduzem o risco: adiantar a reimpressão das peças para o Sprint 0, em paralelo com o trabalho
+eletrônico, e escrever o relatório de forma incremental ao longo do semestre em vez de deixá-lo para
+o final. O encontro de 10/12 deve ser reservado para a entrega e a apresentação, não para
+desenvolvimento.
 
 ## 10.4 Visão do semestre
 
@@ -206,7 +217,7 @@ gantt
     Lógica do jogo                      :s4, 2026-10-22, 2026-11-19
 
     section Integração
-    Montagem e ajuste                   :s5, 2026-11-26, 2026-12-17
+    Montagem e ajuste                   :s5, 2026-11-26, 2026-12-10
 ```
 
 ## 10.5 Riscos e como reduzi-los
@@ -214,9 +225,11 @@ gantt
 Os riscos abaixo saem do que de fato aconteceu na etapa anterior, registrado no relatório final. Não
 são hipóteses.
 
-**Prazo curto para escopo multidisciplinar.** Foi o problema principal relatado. A mitigação é ter um
-resultado demonstrável ao fim de cada sprint, em vez de várias frentes incompletas. Se algo tiver que
-ser cortado, é melhor cortar cedo e conscientemente.
+**Prazo curto para escopo multidisciplinar.** Foi o problema principal relatado, e aqui ele é ainda
+mais apertado: 25 encontros contra os 28 inicialmente previstos, com o semestre fechando em 11/12. A
+mitigação é ter um resultado demonstrável ao fim de cada sprint, em vez de várias frentes
+incompletas. Se algo tiver que ser cortado, é melhor cortar cedo e conscientemente, e a segunda de
+30/11 é o último momento razoável para essa decisão.
 
 **Retrabalho mecânico.** Peças precisaram ser refeitas por incompatibilidade dimensional, e outras
 quebraram em teste. A mitigação é começar a reimpressão cedo, no Sprint 0, em paralelo com o trabalho
@@ -242,7 +255,7 @@ duas ou três linhas o que foi feito, o que ficou pendente e qual a próxima aç
 encontro.
 
 A documentação ruim da etapa anterior não veio de má vontade, veio de deixar o registro para o fim,
-quando o contexto já tinha se perdido. Trinta encontros com registro curto valem mais que uma semana
+quando o contexto já tinha se perdido. Vinte e cinco encontros com registro curto valem mais que uma semana
 de escrita em dezembro.
 
 ---
