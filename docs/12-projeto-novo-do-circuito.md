@@ -236,4 +236,5 @@ alheio.
 
 ---
 
-Anterior: [11. Ficha de levantamento](11-ficha-de-levantamento.md)
+Anterior: [11. Ficha de levantamento](11-ficha-de-levantamento.md) ·
+Próximo: [13. Design do playfield](13-design-do-playfield.md)
