@@ -38,6 +38,8 @@ das falhas intermitentes de comunicação relatadas no relatório anterior. O di
 | [07. Mecânica](docs/07-mecanica.md) | Peças 3D, modelos de referência e processo |
 | [08. Simulação no Proteus](docs/08-simulacao-proteus.md) | Como abrir e rodar a simulação |
 | [09. Pendências e roadmap](docs/09-pendencias-e-roadmap.md) | Erros conhecidos e próximos passos |
+| [10. Plano do semestre](docs/10-plano-do-semestre.md) | Calendário de aulas, sprints e riscos |
+| [11. Ficha de levantamento](docs/11-ficha-de-levantamento.md) | Formulário a preencher no Sprint 0 |
 | [10. Plano do semestre](docs/10-plano-do-semestre.md) | Cronograma 2026.2, sprints e riscos |
 
 ## Arquitetura em uma figura
@@ -82,6 +84,16 @@ para os flippers), e comanda as cargas através de três expansores PCF8574 no b
 a Pi não tem GPIOs suficientes para tudo. Os PCF8574 não fornecem corrente para acionar cargas, e é
 aí que entram os L293D.
 
+## Ferramentas
+
+`tools/levantar_entradas.py` descobre qual sensor está ligado a qual GPIO, que é a pendência que
+trava o resto do projeto. Roda na Raspberry Pi:
+
+```bash
+python3 tools/levantar_entradas.py monitor       # imprime toda mudança de estado
+python3 tools/levantar_entradas.py identificar   # pede um sensor por vez e grava mapeamento.csv
+```
+
 ## Organização do repositório
 
 ```
@@ -90,6 +102,8 @@ PJI-II-Pinball/
 │   ├── 01-visao-geral.md
 │   ├── ...
 │   └── assets/             imagens e recortes do esquemático
+├── tools/
+│   └── levantar_entradas.py    levantamento do mapeamento sensor para GPIO
 ├── upstream/
 │   └── pinball/            submódulo apontando para o repositório anterior
 └── README.md
