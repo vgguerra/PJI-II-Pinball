@@ -21,8 +21,21 @@ impressas em 3D. A lógica de jogo não foi implementada.
 | Software (lógica do jogo) | Não iniciado |
 | Montagem e integração final | Não iniciado |
 
-Vale destacar um ponto: o esquemático tem um erro de endereçamento I²C que provavelmente é a causa
-das falhas intermitentes de comunicação relatadas no relatório anterior. O diagnóstico está em
+### A mesa em 13/08/2026
+
+![Estado atual do playfield](docs/assets/estado-atual-playfield.jpg)
+
+O gabinete está pronto e o playfield está decorado, com a arte montada em camadas de MDF recortadas.
+Estão instaladas as guias de bola brancas, um poste amarelo e alguns reforços, e os furos de montagem
+já existem: três maiores no arco superior, dois com anel na região dos flippers e vários de parafuso
+ao longo das bordas. A caixa mede 450 x 900 mm.
+
+Não há nenhuma eletrônica instalada: nenhum sensor, solenoide, LED, fio, conector ou placa. A
+eletrônica do projeto anterior nunca saiu do papel.
+
+Vale destacar também um erro no esquemático: os três expansores PCF8574 estão com os pinos de
+endereço interligados e aterrados, o que os coloca todos em `0x20`. Isso é provavelmente a causa das
+falhas intermitentes de comunicação relatadas no relatório anterior. O diagnóstico está em
 [Pendências, item P1](docs/09-pendencias-e-roadmap.md).
 
 ## Documentação
@@ -38,9 +51,6 @@ das falhas intermitentes de comunicação relatadas no relatório anterior. O di
 | [07. Mecânica](docs/07-mecanica.md) | Peças 3D, modelos de referência e processo |
 | [08. Simulação no Proteus](docs/08-simulacao-proteus.md) | Como abrir e rodar a simulação |
 | [09. Pendências e roadmap](docs/09-pendencias-e-roadmap.md) | Erros conhecidos e próximos passos |
-| [10. Plano do semestre](docs/10-plano-do-semestre.md) | Calendário de aulas, sprints e riscos |
-| [11. Ficha de levantamento](docs/11-ficha-de-levantamento.md) | Formulário a preencher no Sprint 0 |
-| [12. Projeto novo do circuito](docs/12-projeto-novo-do-circuito.md) | Decisão de redesenhar e o caminho para isso |
 
 ## Arquitetura em uma figura
 

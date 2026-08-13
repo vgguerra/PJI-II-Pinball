@@ -418,5 +418,4 @@ não são usados por nada no projeto atual.
 
 ---
 
-Anterior: [08. Simulação no Proteus](08-simulacao-proteus.md) ·
-Próximo: [10. Plano do semestre](10-plano-do-semestre.md)
+Anterior: [08. Simulação no Proteus](08-simulacao-proteus.md)
