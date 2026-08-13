@@ -37,10 +37,80 @@ O que se aprende com isso, e que nenhum desenho revela:
 Anote tudo. Esse mapa de trajetórias naturais é a base do design, porque projetar um pinball é, no
 fundo, decidir onde interferir nessas trajetórias.
 
-## 13.3 Geometria que importa
+## 13.3 As medidas desta mesa
 
-Valores de referência das máquinas comerciais. A mesa do projeto é menor, então escale as
-proporções em vez de copiar as medidas.
+A caixa foi medida em 13/08: **450 mm de largura por 900 mm de comprimento**.
+
+Isso é uma boa notícia. Um playfield comercial Williams ou Bally tem 515 x 1067 mm, então esta mesa
+está em cerca de **86% da escala real**, e não é uma miniatura. As proporções comerciais podem ser
+aproveitadas quase direto, aplicando o fator de escala.
+
+| Item | Comercial | Escalado 0,86 | Adotar |
+|---|---|---|---|
+| Playfield | 515 x 1067 mm | 450 x 900 mm | medido |
+| Flipper | 76 mm | 65 mm | **65 mm**, impresso em 3D |
+| Bola | 27 mm | 23 mm | ver observação abaixo |
+| Corpo do bumper | 75 mm | 64 mm | **65 mm** |
+| Largura de lane | 35 mm | 30 mm | **30 mm** |
+| Eixo do flipper ao fundo | 100 mm | 86 mm | **90 mm** |
+
+**Sobre a bola.** A escala pede 23 mm, mas 27 mm é o tamanho padrão e o mais fácil de encontrar.
+Usar 27 mm numa mesa escalada deixa o jogo proporcionalmente mais apertado, o que aumenta a
+dificuldade. Uma esfera de rolamento de 22 ou 25 mm fica mais proporcional e costuma ser barata.
+Meçam a bola que já têm antes de decidir, porque esse número afeta o vão entre os flippers.
+
+**Inclinação.** O ângulo não escala, continua entre 6 e 7 graus. Em 900 mm de comprimento, isso dá
+o desnível entre o topo e a base:
+
+| Ângulo | Desnível |
+|---|---|
+| 6 graus | 95 mm |
+| 6,5 graus | 103 mm |
+| 7 graus | 111 mm |
+
+Ou seja, o topo da mesa fica cerca de 10 cm mais alto que a base. Vale conferir se o gabinete
+comporta isso antes de fixar os pés.
+
+**Geometria dos flippers.** Com pá de 65 mm em repouso a 30 graus abaixo da horizontal, a projeção
+horizontal de cada uma é 56 mm. Para um vão de 40 mm entre as pontas, a distância entre os eixos
+fica em **153 mm**, centrada na largura da mesa. Os eixos ficam a 90 mm da borda inferior.
+
+**Divisão em zonas.** Os 900 mm em três terços dão um ponto de partida para distribuir os elementos:
+
+| Faixa | Zona | O que costuma ficar ali |
+|---|---|---|
+| 0 a 300 mm | Superior | Bumpers e alvos altos |
+| 300 a 600 mm | Média | Alvos, caminhos e rampas |
+| 600 a 900 mm | Inferior | Flippers, slingshots e dreno |
+
+### Gabarito pronto para desenhar
+
+O arquivo [`docs/assets/gabarito-playfield.svg`](assets/gabarito-playfield.svg) traz tudo isso
+desenhado em escala 1:1, e foi gerado por
+[`tools/gerar_gabarito_playfield.py`](../tools/gerar_gabarito_playfield.py).
+
+```bash
+python3 tools/gerar_gabarito_playfield.py
+```
+
+Se a área interna útil for menor que a caixa, por causa das paredes do gabinete, passe as medidas
+internas:
+
+```bash
+python3 tools/gerar_gabarito_playfield.py --largura 410 --comprimento 860
+```
+
+O arquivo abre no Inkscape já com as dimensões físicas corretas e vem em camadas separadas: grade de
+10 mm, zonas, geometria dos flippers com o vão e a bola em escala, cotas, e uma camada **proposta**
+vazia, que é onde vocês desenham. As camadas de referência ficam intactas.
+
+Para imprimir em tamanho real, use Arquivo, Imprimir, sem ajuste de escala, e monte as folhas A4 lado
+a lado. Aí é só apoiar sobre a mesa e conferir se as posições batem com os furos que já existem.
+
+## 13.4 Geometria de referência
+
+Valores das máquinas comerciais, para consulta. As medidas já escaladas para esta mesa estão na
+seção anterior.
 
 | Parâmetro | Valor comercial | Observação |
 |---|---|---|
@@ -56,7 +126,7 @@ Sobre o vão entre os flippers, que é a decisão de dificuldade mais importante
 apertado torna o jogo fácil e sem graça, porque a bola quase nunca dreena. Vão largo torna o jogo
 frustrante. Comece com cerca de 1,5 diâmetro de bola e ajuste depois de jogar.
 
-## 13.4 Os elementos e o que cada um faz
+## 13.5 Os elementos e o que cada um faz
 
 Entender a função de cada elemento é o que permite escolher onde colocá-lo.
 
@@ -80,7 +150,7 @@ de acrescentar mais um elemento eletrônico, veja se um poste bem posicionado n�
 **O dreno precisa de sensor.** Sem ele o software não sabe que a bola foi perdida e a partida nunca
 termina. É o sensor mais importante do jogo e o mais fácil de esquecer.
 
-## 13.5 Princípios de um bom layout
+## 13.6 Princípios de um bom layout
 
 **Toda bola precisa poder voltar.** O erro mais comum em pinball caseiro é criar uma região de onde a
 bola não retorna aos flippers. Ao posicionar cada elemento, pergunte para onde ele manda a bola.
@@ -101,7 +171,7 @@ que toca, pontuação que sobe. Sem isso, o jogador não entende o que fez.
 **O topo é área de acúmulo.** Bumpers no topo prendem a bola por alguns segundos, gerando pontos e
 movimento imprevisível. É o que dá emoção sem exigir habilidade.
 
-## 13.6 Ferramentas para desenhar
+## 13.7 Ferramentas para desenhar
 
 Em ordem de utilidade para o caso de vocês, que já têm a mesa pronta.
 
@@ -141,7 +211,7 @@ adiante, quando for imprimir um suporte de bumper.
 **draw.io e Figma** funcionam para o diagrama de blocos do circuito, mas não têm noção de escala
 física, o que atrapalha num desenho onde milímetros importam.
 
-## 13.7 Regras do jogo
+## 13.8 Regras do jogo
 
 O layout define onde a bola bate. As regras definem o que isso significa. Vale escrever antes de
 programar.
@@ -168,7 +238,7 @@ pontuação em exibição. É o que convida alguém a jogar, e numa feira isso f
 Uma sugestão de escopo: comece com pontuação simples e três bolas. Modos de jogo, multiball e bônus
 progressivo são ótimos, mas só valem depois que a máquina estiver funcionando de ponta a ponta.
 
-## 13.8 Template do layout
+## 13.9 Template do layout
 
 Preencha conforme o desenho for fechando. Esta tabela alimenta diretamente a contagem de I/O da
 [seção 12.6](12-projeto-novo-do-circuito.md#126-passo-2-contagem-de-io).
@@ -186,7 +256,7 @@ Preencha conforme o desenho for fechando. Esta tabela alimenta diretamente a con
 
 Ao final, some as colunas de entradas e saídas. Esses dois números são o que define o circuito.
 
-## 13.9 Sugestão de layout mínimo
+## 13.10 Sugestão de layout mínimo
 
 Um ponto de partida que entrega um pinball completo e cabe no tempo restante. Ajuste conforme o
 teste da bola mostrar o que a mesa pede.
