@@ -2,60 +2,17 @@
 
 # 11. Ficha de levantamento
 
-Formulário para preencher nos encontros de 13/08 e 17/08, fechando o Sprint 0. Cada seção
-corresponde a uma tarefa do quadro de atividades. O objetivo é sair daqui com dados, não com
-impressões.
+Formulário para preencher nos encontros de 13/08 e 17/08, fechando o Sprint 0. O objetivo é sair
+daqui com dados, não com impressões.
+
+Com a nova ordem de trabalho, registrada em
+[12. Projeto novo do circuito](12-projeto-novo-do-circuito.md), o Sprint 0 passou a ser preparação
+para o protótipo do bumper. As seções de mapeamento de sensores, inventário mecânico, simulação e
+contatos saíram desta ficha por ora, e voltam quando os sprints correspondentes chegarem.
 
 Preencha direto neste arquivo e faça commit ao final do encontro.
 
-## 11.1 Mapeamento sensor para GPIO
-
-> **Atualizado em 13/08.** A foto do estado atual mostrou que não há eletrônica instalada na mesa.
-> Com a decisão de redesenhar o circuito, registrada em
-> [12. Projeto novo do circuito](12-projeto-novo-do-circuito.md), este mapeamento deixa de ser algo a
-> descobrir no esquemático antigo e passa a ser algo a **definir** no projeto novo. A tabela abaixo
-> continua servindo, agora como decisão de projeto, e o programa de bancada serve para conferir a
-> fiação depois de montada.
-
-Resolve a pendência [P7](09-pendencias-e-roadmap.md).
-
-Há dois caminhos. O primeiro é abrir o `.pdsprj` no Proteus e inspecionar cada nó, que funciona sem
-o hardware montado. O segundo é rodar na Raspberry Pi:
-
-```bash
-python3 tools/levantar_entradas.py identificar
-```
-
-O programa pede para acionar um sensor por vez e registra qual GPIO respondeu, gravando um
-`mapeamento.csv` ao final. Vale usar os dois caminhos e comparar, porque a fiação real pode divergir
-do esquemático, e essa divergência é justamente o tipo de coisa que consome tarde de depuração
-depois.
-
-| Sensor | Tipo | GPIO | Pino físico | Função no jogo | Confirmado por |
-|---|---|---|---|---|---|
-| SI01 | Indutivo | | | | |
-| SI02 | Indutivo | | | | |
-| SI03 | Indutivo | | | | |
-| CF01 | Fim de curso | | | | |
-| CF02 | Fim de curso | | | | |
-| CF03 | Fim de curso | | | | |
-| CF04 | Fim de curso | | | | |
-| CF05 | Fim de curso | | | | |
-| CF06 | Fim de curso | | | | |
-| CF07 | Fim de curso | | | | |
-| CF08 | Fim de curso | | | | |
-| CF09 | Fim de curso | | | | |
-| CF10 | Fim de curso | | | | |
-
-Em "Confirmado por", anote Proteus, bancada, ou ambos.
-
-Os 16 GPIOs disponíveis são 4, 5, 6, 12, 13, 16, 17, 19, 20, 21, 22, 23, 24, 25, 26 e 27. Sobram
-três sem sensor. Se sobrar um número diferente de três, algo não bate e vale investigar antes de
-seguir.
-
-GPIOs que ficaram livres: ________________
-
-## 11.2 Inventário de hardware
+## 11.1 Inventário de hardware
 
 O que existe, o que queimou e o que falta. A coluna de observação é onde se registra estado
 duvidoso, por exemplo um CI que já esquentou demais.
@@ -76,68 +33,51 @@ duvidoso, por exemplo um CI que já esquentou demais.
 | Protoboard | | | | |
 | Cabos e conectores | | | | |
 
-Itens que a documentação indica comprar, mas que ainda não estavam no projeto original:
+### Material do protótipo do bumper
 
-| Item | Motivo | Pendência |
-|---|---|---|
-| MOSFET de canal N para solenoide | Não existe estágio de potência no esquemático | [P2](09-pendencias-e-roadmap.md) |
-| Diodo de recuperação rápida | Obrigatório em carga indutiva | [P2](09-pendencias-e-roadmap.md) |
-| Fonte dedicada de 24 V ou 48 V | Solenoides não podem usar a fonte lógica | [P2](09-pendencias-e-roadmap.md) |
-| Rede de pull-up 10 kΩ extra | Padronizar CF01 a CF08 | [P6](09-pendencias-e-roadmap.md) |
-| Conversor de nível, se manter 5 V | Proteger os GPIOs de 3,3 V | [P4](09-pendencias-e-roadmap.md) |
-| Capacitores de desacoplamento | Absorver o transiente do pulso | [P2](09-pendencias-e-roadmap.md) |
+Esta é a compra que precisa sair deste encontro, porque é o que o Sprint 1 consome. Comprar **uma
+unidade de cada** por enquanto: o objetivo é validar um mecanismo antes de replicar.
 
-A decisão sobre o conversor de nível depende de uma escolha do Sprint 1: alimentar os PCF8574 em
-3,3 V dispensa o conversor. Vale decidir isso antes de comprar.
-
-## 11.3 Inventário mecânico
-
-| Peça | Existe | Estado | Reimprimir |
+| Item | Especificação | Motivo | Comprado |
 |---|---|---|---|
-| Estrutura da mesa | | | |
-| Bumper 1 | | | |
-| Bumper 2 | | | |
-| Flipper esquerdo | | | |
-| Flipper direito | | | |
-| Injetor de bolas | | | |
-| Repositor de bolas | | | |
-| Bola | | | |
+| Solenoide | a definir, ver abaixo | O atuador do bumper | |
+| Fonte dedicada | conforme a solenoide | Não pode dividir com a lógica | |
+| MOSFET de canal N | corrente de pico com folga | Estágio de potência | |
+| Diodo de recuperação rápida | corrente da bobina | Obrigatório, protege o MOSFET | |
+| Resistor de gate | centenas de ohms | Limita o pico no acionamento | |
+| Capacitor de desacoplamento | eletrolítico, perto do driver | Absorve o transiente do pulso | |
 
-Em "Estado", use íntegra, trincada, quebrada ou faltando.
+**A especificação da solenoide é a primeira decisão técnica do semestre**, porque todo o resto do
+estágio de potência depende dela. Anote aqui o que for escolhido:
 
-Arquivos 3D recuperados com a turma anterior: ( ) sim ( ) não ( ) parcial
+- Tensão: ________________
+- Corrente nominal: ________________
+- Corrente de pico: ________________
+- Curso do núcleo: ________________
+- Força: ________________
 
-Se parcial, quais faltam: ________________
+Solenoide de pinball comercial costuma operar entre 24 V e 48 V, com pulsos de 30 a 50 ms. No
+mercado nacional, vale procurar solenoide de trava elétrica ou de máquina de venda, que são mais
+fáceis de encontrar.
 
-Isso é a pendência [P11](09-pendencias-e-roadmap.md). Sem os arquivos, uma peça que quebre precisa
-ser reprojetada do zero.
+Não compre ainda o material do circuito completo, como expansores, conversor de nível ou drivers de
+luz. Essa lista sai do esquemático, no Sprint 4, e comprar antes é comprar por estimativa.
 
-## 11.4 Simulação no Proteus
+## 11.2 Medidas necessárias
 
-- ( ) O projeto abre sem erro
-- ( ) A biblioteca da Raspberry Pi está instalada
-- ( ) A simulação roda e o LED do bit 0 pisca
+O protótipo depende destes números.
 
-Versão do Proteus usada: ________________
-
-Se a simulação não abrir, registre o erro aqui, porque isso muda o caminho do Sprint 1:
-
-________________________________________________
-
-## 11.5 Contatos com a turma anterior
-
-| Assunto | Pendência | Status |
+| Medida | Valor | Observação |
 |---|---|---|
-| Arquivos 3D (stl, 3mf, projeto editável) | [P11](09-pendencias-e-roadmap.md) | |
-| Parâmetros de impressão usados | [P11](09-pendencias-e-roadmap.md) | |
-| Arquivo LICENSE no repositório | [P8](09-pendencias-e-roadmap.md) | |
-| Qual sensor cumpre qual papel na mesa | [P7](09-pendencias-e-roadmap.md) | |
-| Quais componentes queimaram nos testes | | |
+| Caixa | 450 x 900 mm | medido em 13/08 |
+| Área interna útil do playfield | | descontando as paredes do gabinete |
+| Diâmetro da bola | | define o vão dos flippers e a força do bumper |
+| Inclinação de trabalho | | entre 6 e 7 graus |
 
-A última linha vale perguntar de forma direta. O relatório menciona substituição de componentes, e
-saber o que queimou e em que circunstância pode poupar repetir o mesmo erro.
+A inclinação e o diâmetro da bola são o que permite calibrar a força do bumper no Sprint 1. Sem
+eles, não há como saber se o arremesso faz sentido.
 
-## 11.6 Registro do encontro
+## 11.3 Registro do encontro
 
 Anote ao final de cada encontro, em duas ou três linhas.
 
