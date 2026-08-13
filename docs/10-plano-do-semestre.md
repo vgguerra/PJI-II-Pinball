@@ -76,55 +76,67 @@ ao fim do prazo com muitas frentes em 80%.
 
 ### Sprint 0. Organização e levantamento, encontros 1 a 3 (06/08 a 17/08)
 
-**Objetivo:** saber exatamente o que existe e em que estado.
+> **Revisado em 13/08.** A foto do estado atual mostrou que não há eletrônica instalada na mesa, e a
+> decisão passou a ser redesenhar o circuito. Ver
+> [12. Projeto novo do circuito](12-projeto-novo-do-circuito.md). O levantamento deixou de ser sobre
+> o esquemático antigo e passou a ser sobre a mesa física.
+
+**Objetivo:** saber o que existe e definir o que a mesa vai ter.
 
 - [x] Organizar o projeto, produzir a documentação técnica e montar o quadro de atividades (06/08)
-- Clonar o repositório e ler a documentação técnica completa
-- Abrir o projeto no Proteus e rodar a simulação existente
-- Inventariar o hardware físico: quais componentes existem, quais foram queimados, o que falta comprar
-- Inventariar as peças mecânicas impressas e identificar as que estão quebradas ou faltando
-- Contatar a equipe anterior para recuperar os arquivos 3D ([P11](09-pendencias-e-roadmap.md))
-- Levantar o mapeamento sensor para GPIO no Proteus ([P7](09-pendencias-e-roadmap.md))
+- [x] Decidir redesenhar o circuito em vez de corrigir o anterior (13/08)
+- Ler a documentação técnica do repositório
+- Mapear o playfield: numerar os furos existentes e definir o que vai em cada um
+- Definir o escopo de jogo: quantos flippers, bumpers, alvos e luzes
+- Fazer a contagem de I/O a partir do mapa do playfield
+- Inventariar o hardware físico: o que existe, o que queimou, o que falta comprar
+- Inventariar as peças mecânicas impressas e identificar as quebradas
+- Contatar a turma anterior para recuperar os arquivos 3D ([P11](09-pendencias-e-roadmap.md))
 
-**Entrega:** tabela da [seção 5.2](05-pinout.md#52-mapeamento-sensor-para-gpio) preenchida e lista de
-compras fechada.
+**Entrega:** mapa do playfield e contagem de I/O prontos, e inventário do que já existe.
 
-**Por que isso primeiro:** quase tudo depende de saber qual pino é o quê, e essa tarefa não precisa de
-hardware montado nem de material comprado. É o melhor uso possível das primeiras semanas, enquanto
-qualquer compra ainda estaria em trânsito.
+**Por que isso primeiro:** o circuito é consequência do playfield. Quantos sensores, solenoides e
+luzes existem é decisão de jogo, tomada olhando a mesa, e é dela que sai a contagem de I/O que define
+o circuito. Desenhar antes disso é desenhar no vazio.
 
 **Marco de segunda (17/08):** fechar o levantamento. Como 06/08 foi consumido pela organização,
-restam dois encontros de trabalho técnico aqui. Leitura da documentação e contato com a turma anterior
-não dependem de estar em sala, então vale resolvê-los fora do horário e reservar 13/08 e 17/08 para o
-levantamento no Proteus e o fechamento da lista de compras.
+restam dois encontros de trabalho técnico aqui. Ler a documentação e contatar a turma anterior não
+dependem de estar em sala, então vale resolvê-los fora do horário e reservar 13/08 e 17/08 para o
+trabalho com a mesa na frente.
 
-### Sprint 1. Correção do hardware, encontros 4 a 7 (20/08 a 03/09)
+### Sprint 1. Projeto do circuito, encontros 4 a 7 (20/08 a 03/09)
 
-**Objetivo:** deixar o projeto eletrônico correto no papel antes de energizar nada.
+> **Revisado em 13/08.** Este sprint era corrigir o esquemático antigo. Passou a ser desenhar o novo,
+> pelo mesmo motivo do Sprint 0.
 
-- Corrigir o endereçamento dos três PCF8574 no esquemático ([P1](09-pendencias-e-roadmap.md))
-- Definir a origem dos pinos de habilitação dos L293D ([P3](09-pendencias-e-roadmap.md))
+**Objetivo:** ter o circuito desenhado e a lista de materiais fechada, antes de energizar nada.
+
+- Definir a arquitetura de I/O: quantos expansores e quantos drivers, a partir da contagem
+- Decidir a topologia de iluminação: LED discreto com driver, ou fita endereçável
 - Decidir a alimentação dos expansores, 3,3 V ou conversor de nível ([P4](09-pendencias-e-roadmap.md))
-- Acrescentar rede de pull-up para CF01 a CF08 ([P6](09-pendencias-e-roadmap.md))
 - Medir a saída dos sensores indutivos e confirmar que não passa de 3,3 V
-- Atualizar o esquemático no Proteus e simular novamente
+- Instalar o Proteus e confirmar a biblioteca da Raspberry Pi, se for simular
+- Desenhar o esquemático novo, com rótulo de rede em todos os fios
+- Fechar a lista de materiais a partir do esquemático
 
-**Entrega:** esquemático revisado, com as correções documentadas, e simulação rodando com três
-expansores em endereços distintos.
+**Entrega:** esquemático novo, com cada escolha justificada, e lista de materiais que sai dele.
 
-**Marco de segunda (31/08):** apresentar ao professor o diagnóstico dos problemas encontrados e as
-correções propostas. Esse é um bom momento para validar as decisões antes de comprar componente.
+As regras obrigatórias do desenho estão na
+[seção 12.9](12-projeto-novo-do-circuito.md#129-regras-para-o-esquemático-novo). A mais importante é
+rotular todas as redes, que é a correção mais barata e mais valiosa em relação ao projeto anterior.
+
+**Marco de segunda (31/08):** apresentar ao professor o esquemático novo e a lista de materiais. É o
+momento de validar as escolhas antes de comprar componente.
 
 ### Sprint 2. Bancada, encontros 8 a 12 (10/09 a 28/09)
 
 **Objetivo:** fechar o caminho completo de sensor até LED, com hardware real.
 
 - Montar o circuito em protoboard ou placa de ensaio
-- Confirmar os três expansores com `i2cdetect -y 1`
-- Validar leitura de todos os 13 sensores com o programa de diagnóstico
-- Validar acionamento dos 12 LEDs
-- Ajustar o valor dos resistores de LED se o brilho ficar insuficiente
-  ([P10](09-pendencias-e-roadmap.md))
+- Confirmar os expansores no barramento com `i2cdetect -y 1`, todos em endereços distintos
+- Validar a leitura de todos os sensores com `tools/levantar_entradas.py`
+- Validar o acionamento das luzes
+- Ajustar o brilho das luzes se ficar insuficiente ([P10](09-pendencias-e-roadmap.md))
 - Implementar detecção por interrupção com tratamento de repique
   ([P9](09-pendencias-e-roadmap.md))
 - Aplicar as correções de código listadas em [P12](09-pendencias-e-roadmap.md)
