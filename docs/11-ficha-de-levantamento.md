@@ -10,8 +10,14 @@ Preencha direto neste arquivo e faça commit ao final do encontro.
 
 ## 11.1 Mapeamento sensor para GPIO
 
-Resolve a pendência [P7](09-pendencias-e-roadmap.md). É a tarefa mais importante do sprint, porque
-sem ela não se escreve a lógica do jogo.
+> **Atualizado em 13/08.** A foto do estado atual mostrou que não há eletrônica instalada na mesa.
+> Com a decisão de redesenhar o circuito, registrada em
+> [12. Projeto novo do circuito](12-projeto-novo-do-circuito.md), este mapeamento deixa de ser algo a
+> descobrir no esquemático antigo e passa a ser algo a **definir** no projeto novo. A tabela abaixo
+> continua servindo, agora como decisão de projeto, e o programa de bancada serve para conferir a
+> fiação depois de montada.
+
+Resolve a pendência [P7](09-pendencias-e-roadmap.md).
 
 Há dois caminhos. O primeiro é abrir o `.pdsprj` no Proteus e inspecionar cada nó, que funciona sem
 o hardware montado. O segundo é rodar na Raspberry Pi:
@@ -153,4 +159,5 @@ Próxima ação:
 
 ---
 
-Anterior: [10. Plano do semestre](10-plano-do-semestre.md)
+Anterior: [10. Plano do semestre](10-plano-do-semestre.md) ·
+Próximo: [12. Projeto novo do circuito](12-projeto-novo-do-circuito.md)
