@@ -70,152 +70,126 @@ que motivou este trabalho.
 
 ## 10.3 Sprints
 
-O semestre se divide em seis blocos, cada um com um resultado verificável ao final. A ideia de ter
-sempre um resultado demonstrável é proteger contra o risco que mais afetou a etapa anterior: chegar
-ao fim do prazo com muitas frentes em 80%.
+> **Revisado em 13/08.** A ordem passou a ser de baixo para cima. Em vez de desenhar o playfield e o
+> circuito no papel para depois montar, o semestre começa fazendo o mecanismo mais crítico funcionar
+> de verdade: acionar uma solenoide e arremessar a bola com força adequada. O desenho vem depois,
+> informado pelo que o protótipo ensinar.
 
-### Sprint 0. Organização e levantamento, encontros 1 a 3 (06/08 a 17/08)
+Seis blocos, cada um com um resultado verificável ao final. A ideia de ter sempre algo demonstrável é
+proteger contra o risco que mais afetou a etapa anterior: chegar ao fim do prazo com muitas frentes
+em 80%.
 
-> **Revisado em 13/08.** A foto do estado atual mostrou que não há eletrônica instalada na mesa, e a
-> decisão passou a ser redesenhar o circuito. Ver
-> [12. Projeto novo do circuito](12-projeto-novo-do-circuito.md). O levantamento deixou de ser sobre
-> o esquemático antigo e passou a ser sobre a mesa física.
+**Por que começar pelos mecanismos.** A força necessária para arremessar a bola, a corrente que a
+solenoide puxa e o tempo de pulso adequado só se descobrem experimentando. Esses três números são
+exatamente os que o circuito precisa para ser dimensionado, e as dimensões do mecanismo montado são o
+que o layout do playfield precisa para posicionar os elementos. Fazendo nessa ordem, cada etapa
+seguinte parte de dado medido em vez de estimativa.
 
-**Objetivo:** saber o que existe e definir o que a mesa vai ter.
+### Sprint 0. Organização e preparação, encontros 1 a 3 (06/08 a 17/08)
+
+**Objetivo:** ter em mãos o que é preciso para montar o primeiro bumper.
 
 - [x] Organizar o projeto, produzir a documentação técnica e montar o quadro de atividades (06/08)
 - [x] Decidir redesenhar o circuito em vez de corrigir o anterior (13/08)
-- Ler a documentação técnica do repositório
-- Mapear o playfield: numerar os furos existentes e definir o que vai em cada um
-- Definir o escopo de jogo: quantos flippers, bumpers, alvos e luzes
-- Fazer a contagem de I/O a partir do mapa do playfield
-- Inventariar o hardware físico: o que existe, o que queimou, o que falta comprar
-- Inventariar as peças mecânicas impressas e identificar as quebradas
+- Medir a bola e a área interna útil do playfield
+- Especificar a solenoide do bumper: tensão, corrente e curso
+- Fechar a compra do material do protótipo: solenoide, fonte, MOSFET, diodo de recuperação
+- Inventariar o hardware físico e as peças 3D já impressas
 - Contatar a turma anterior para recuperar os arquivos 3D ([P11](09-pendencias-e-roadmap.md))
 
-**Entrega:** mapa do playfield e contagem de I/O prontos, e inventário do que já existe.
+**Entrega:** material do protótipo comprado ou encomendado, e inventário do que já existe.
 
-**Por que isso primeiro:** o circuito é consequência do playfield. Quantos sensores, solenoides e
-luzes existem é decisão de jogo, tomada olhando a mesa, e é dela que sai a contagem de I/O que define
-o circuito. Desenhar antes disso é desenhar no vazio.
+**Marco de segunda (17/08):** fechar a especificação e a compra. Compra em trânsito é o que mais
+atrasa projeto de bancada, então quanto antes sair, melhor.
 
-**Marco de segunda (17/08):** fechar o levantamento. Como 06/08 foi consumido pela organização,
-restam dois encontros de trabalho técnico aqui. Ler a documentação e contatar a turma anterior não
-dependem de estar em sala, então vale resolvê-los fora do horário e reservar 13/08 e 17/08 para o
-trabalho com a mesa na frente.
+### Sprint 1. Protótipo do bumper, encontros 4 a 7 (20/08 a 03/09)
 
-### Sprint 1. Projeto do circuito, encontros 4 a 7 (20/08 a 03/09)
+**Objetivo:** uma solenoide arremessando a bola com força que faça sentido para a mesa.
 
-> **Revisado em 13/08.** Este sprint era corrigir o esquemático antigo. Passou a ser desenhar o novo,
-> pelo mesmo motivo do Sprint 0.
-
-**Objetivo:** ter o circuito desenhado e a lista de materiais fechada, antes de energizar nada.
-
-- Definir a arquitetura de I/O: quantos expansores e quantos drivers, a partir da contagem
-- Decidir a topologia de iluminação: LED discreto com driver, ou fita endereçável
-- Decidir a alimentação dos expansores, 3,3 V ou conversor de nível ([P4](09-pendencias-e-roadmap.md))
-- Medir a saída dos sensores indutivos e confirmar que não passa de 3,3 V
-- Instalar o Proteus e confirmar a biblioteca da Raspberry Pi, se for simular
-- Desenhar o esquemático novo, com rótulo de rede em todos os fios
-- Fechar a lista de materiais a partir do esquemático
-
-**Entrega:** esquemático novo, com cada escolha justificada, e lista de materiais que sai dele.
-
-As regras obrigatórias do desenho estão na
-[seção 12.9](12-projeto-novo-do-circuito.md#129-regras-para-o-esquemático-novo). A mais importante é
-rotular todas as redes, que é a correção mais barata e mais valiosa em relação ao projeto anterior.
-
-**Marco de segunda (31/08):** apresentar ao professor o esquemático novo e a lista de materiais. É o
-momento de validar as escolhas antes de comprar componente.
-
-### Sprint 2. Bancada, encontros 8 a 12 (10/09 a 28/09)
-
-**Objetivo:** fechar o caminho completo de sensor até LED, com hardware real.
-
-- Montar o circuito em protoboard ou placa de ensaio
-- Confirmar os expansores no barramento com `i2cdetect -y 1`, todos em endereços distintos
-- Validar a leitura de todos os sensores com `tools/levantar_entradas.py`
-- Validar o acionamento das luzes
-- Ajustar o brilho das luzes se ficar insuficiente ([P10](09-pendencias-e-roadmap.md))
-- Implementar detecção por interrupção com tratamento de repique
-  ([P9](09-pendencias-e-roadmap.md))
-- Aplicar as correções de código listadas em [P12](09-pendencias-e-roadmap.md)
-
-**Entrega:** demonstração em que acionar um sensor acende um LED, com resposta consistente. Primeiro
-marco de fato verificável do semestre.
-
-**Marcos de segunda (14/09 e 28/09):** na primeira, revisar o andamento da montagem em protoboard. Na
-segunda, demonstrar o caminho fechado e atualizar a documentação com o que divergiu do previsto.
-
-### Sprint 3. Solenoides, encontros 13 a 17 (01/10 a 26/10)
-
-**Objetivo:** resolver a parte que a etapa anterior não chegou a projetar.
-
-- Especificar as solenoides: tensão, corrente de pico e tempo máximo de pulso
-- Projetar o estágio de potência com MOSFET, diodo de recuperação e desacoplamento
+- Montar o acionamento de uma solenoide: MOSFET, diodo de recuperação e fonte dedicada
+- Implementar a proteção de tempo de pulso, em software e em hardware
   ([P2](09-pendencias-e-roadmap.md))
-- Dimensionar e adquirir a fonte dedicada
-- Montar e testar **uma única** solenoide, com proteção de tempo em software e em hardware
-- Medir o tempo de pulso real e o comportamento térmico da bobina
-- Só depois de validado, replicar para as demais
+- Acionar pela Raspberry Pi e medir o tempo de pulso real
+- Calibrar a força com a mesa na inclinação de trabalho e a bola de verdade
+- Medir a corrente de pico e o aquecimento da bobina
+- Registrar os números medidos, que alimentam o projeto do circuito
 
-**Entrega:** uma solenoide acionada de forma confiável, com proteção comprovada, e o circuito
-documentado.
+**Entrega:** bumper acionando e arremessando a bola de forma repetível, com os números medidos
+anotados.
 
-**Revisão de 08/10:** revisar o projeto do estágio de potência com o professor antes de energizar.
-Esta é a etapa com risco real de dano, e vale uma revisão externa. Fica numa quinta porque a segunda
-deste intervalo, 12/10, cai em feriado.
+**Marco de segunda (31/08):** demonstrar o bumper funcionando. É o primeiro resultado físico do
+semestre e um bom momento para mostrar ao professor.
 
-**Marco de segunda (26/10):** fechamento do sprint, com a solenoide validada e o circuito documentado.
+> **Cuidado principal deste sprint.** Solenoide de pinball é feita para pulsos de 30 a 50 ms.
+> Energizada continuamente, a bobina queima em segundos. A proteção de tempo precisa existir desde o
+> primeiro acionamento, não depois. E teste sempre uma unidade isolada antes de replicar.
 
-**Cuidado principal:** testar sempre uma solenoide isolada primeiro. Um erro de tempo de pulso
-replicado em dez bobinas queima dez bobinas.
+### Sprint 2. Os demais mecanismos, encontros 8 a 12 (10/09 a 28/09)
 
-### Sprint 4. Lógica do jogo, encontros 18 a 23 (29/10 a 23/11)
+**Objetivo:** ter os três tipos de mecanismo do jogo funcionando.
+
+- Replicar o acionamento para o segundo bumper
+- Prototipar o flipper: mesmo princípio, geometria e curso diferentes
+- Prototipar o injetor de bolas
+- Medir as dimensões finais de cada mecanismo montado, com suporte e curso
+- Ajustar ou reimprimir as peças 3D que não servirem
+
+**Entrega:** bumper, flipper e injetor funcionando em bancada, com dimensões medidas.
+
+**Marcos de segunda (14/09 e 28/09):** na primeira, revisar o andamento do flipper. Na segunda,
+demonstrar os três mecanismos.
+
+### Sprint 3. Layout do playfield, encontros 13 a 17 (01/10 a 26/10)
+
+**Objetivo:** decidir onde cada mecanismo vai e como o jogo funciona.
+
+- Rolar a bola na mesa inclinada e mapear as trajetórias naturais
+- Posicionar os mecanismos, aproveitando os furos que já existem
+- Definir alvos, sensores e o dreno
+- Escrever as regras de pontuação
+- Fechar a contagem de I/O ([seção 12.5](12-projeto-novo-do-circuito.md#125-passo-1-contagem-de-io))
+
+**Entrega:** layout definido e contagem de entradas e saídas fechada.
+
+**Marco de segunda (26/10):** apresentar o layout e a contagem.
+
+### Sprint 4. Circuito e montagem, encontros 18 a 23 (29/10 a 23/11)
+
+**Objetivo:** sair do protótipo de bancada para a instalação na mesa.
+
+- Definir a arquitetura de I/O e a topologia de iluminação
+- Desenhar o esquemático, com rótulo de rede em todos os fios
+  ([seção 12.8](12-projeto-novo-do-circuito.md#128-regras-para-o-esquemático-novo))
+- Fechar a lista de materiais e comprar
+- Instalar sensores, atuadores e luzes na mesa
+- Passar o cabeamento separando potência de sinal ([P5](09-pendencias-e-roadmap.md))
+- Validar cada caminho: sensor lido, luz acesa, solenoide acionada
+
+**Entrega:** hardware instalado na mesa e respondendo a comando.
+
+**Marcos de segunda (09/11 e 23/11):** na primeira, revisar o esquemático antes de comprar. Na
+segunda, demonstrar o hardware instalado.
+
+### Sprint 5. Lógica do jogo e ajuste, encontros 24 a 27 (26/11 a 10/12)
 
 **Objetivo:** transformar hardware que responde em um jogo que se joga.
 
-- Reorganizar o código na estrutura proposta em
-  [06. Software, seção 6.7](06-software.md#67-estrutura-de-código-sugerida)
-- Centralizar o mapeamento físico em `config/mapa_io.py`
+- Centralizar o mapeamento de pinos em um arquivo de configuração
 - Implementar a máquina de estados: atração, partida, bola em jogo, fim de jogo
 - Implementar pontuação e contagem de bolas
-- Implementar os efeitos de LED por estado
-- Implementar o acionamento dos flippers respondendo aos botões
-- Medir a latência real entre botão e movimento do flipper
-
-**Entrega:** partida completa jogável, mesmo que sobre a bancada e sem a mesa montada.
-
-**Marcos de segunda (09/11 e 23/11):** na primeira, alinhar as regras do jogo e a estrutura do código.
-Na segunda, demonstrar a partida completa e decidir o que ainda cabe no Sprint 5.
-
-**Ponto de decisão:** com a latência do flipper medida, decidir se a migração para ESP32 se justifica.
-Se a resposta estiver consistente, não migre. Ver
-[9.3](09-pendencias-e-roadmap.md#93-sobre-a-migração-para-esp32-com-rtos).
-
-### Sprint 5. Montagem e ajuste, encontros 24 a 27 (26/11 a 10/12)
-
-**Objetivo:** integrar tudo na mesa física e ajustar a jogabilidade.
-
-- Reimprimir peças quebradas ou faltantes
-- Montar a estrutura e instalar sensores e atuadores na mesa
-- Definir e medir a inclinação da mesa
-- Passar o cabeamento separando potência de sinal
-- Calibrar posição dos sensores e força dos flippers
+- Calibrar força dos flippers e posição dos sensores
 - Testar com jogadores de fora da equipe
 - Fechar a documentação e o relatório final
 
-**Entrega:** pinball montado e jogável, documentação atualizada e relatório entregue.
+**Entrega:** pinball jogável, documentação atualizada e relatório entregue.
 
-**Marco de segunda (07/12):** revisão do estado da montagem, corte de escopo e ensaio da apresentação.
-É a última segunda do semestre, então o que não estiver encaminhado aqui não entra.
+**Marco de segunda (07/12):** última segunda do semestre. O que não estiver encaminhado aqui não
+entra.
 
-**Atenção ao aperto deste sprint.** Restam apenas quatro encontros para montagem, calibragem, teste
-com jogadores e relatório. Não há folga para retrabalho mecânico. Duas medidas
-reduzem o risco: adiantar a reimpressão das peças para o Sprint 0, em paralelo com o trabalho
-eletrônico, e escrever o relatório de forma incremental ao longo do semestre em vez de deixá-lo para
-o final. O encontro de 10/12 deve ser reservado para a entrega e a apresentação, não para
-desenvolvimento.
+> **Atenção ao aperto deste sprint.** Restam quatro encontros para a lógica do jogo, a calibragem e o
+> relatório. A mitigação é escrever a lógica em paralelo ao Sprint 4, assim que os primeiros sensores
+> responderem, em vez de esperar tudo instalado. E o relatório precisa ser escrito de forma
+> incremental ao longo do semestre.
 
 ## 10.4 Visão do semestre
 
@@ -225,20 +199,20 @@ gantt
     axisFormat %d/%m
     title Sprints do semestre 2026.2
 
-    section Levantamento
+    section Preparação
     Organização e documentação          :s0a, 2026-08-06, 2026-08-06
-    Inventário e mapeamento de I/O      :s0b, 2026-08-13, 2026-08-17
+    Especificação e compras             :s0b, 2026-08-13, 2026-08-17
 
-    section Hardware
-    Correção do esquemático             :s1, 2026-08-20, 2026-09-03
-    Validação em bancada                :s2, 2026-09-10, 2026-09-28
-    Projeto das solenoides              :s3, 2026-10-01, 2026-10-26
+    section Mecanismos
+    Protótipo do bumper                 :s1, 2026-08-20, 2026-09-03
+    Flipper e injetor                   :s2, 2026-09-10, 2026-09-28
 
-    section Software
-    Lógica do jogo                      :s4, 2026-10-29, 2026-11-23
+    section Projeto
+    Layout do playfield                 :s3, 2026-10-01, 2026-10-26
+    Circuito e montagem                 :s4, 2026-10-29, 2026-11-23
 
-    section Integração
-    Montagem e ajuste                   :s5, 2026-11-26, 2026-12-10
+    section Jogo
+    Lógica e ajuste final               :s5, 2026-11-26, 2026-12-10
 ```
 
 ## 10.5 Riscos e como reduzi-los

@@ -75,55 +75,24 @@ usar. Desenhar o circuito antes disso é desenhar no vazio.
 
 ```mermaid
 flowchart TD
-    A["<b>1. Mapa do playfield</b><br/>o que vai em cada furo da mesa"]
-    B["<b>2. Contagem de I/O</b><br/>quantas entradas e quantas saídas"]
-    C["<b>3. Arquitetura</b><br/>quantos expansores e drivers"]
-    D["<b>4. Esquemático</b><br/>desenho com rótulos de rede"]
-    E["<b>5. Lista de materiais</b><br/>o que comprar"]
-    F["<b>6. Bancada</b><br/>montar e validar por partes"]
+    A["<b>1. Protótipo dos mecanismos</b><br/>bumper, flipper e injetor<br/>funcionando em bancada"]
+    B["<b>2. Layout do playfield</b><br/>onde cada mecanismo vai"]
+    C["<b>3. Contagem de I/O</b><br/>quantas entradas e saídas"]
+    D["<b>4. Arquitetura</b><br/>quantos expansores e drivers"]
+    E["<b>5. Esquemático</b><br/>desenho com rótulos de rede"]
+    F["<b>6. Lista de materiais</b>"]
     A --> B --> C --> D --> E --> F
 ```
 
-A vantagem prática dessa ordem é que a lista de materiais, que é o que motivou a decisão, sai como
-resultado natural do passo 5, e não de um chute.
+A ordem começa pelo protótipo dos mecanismos, e não pelo desenho, por uma razão prática: a força
+necessária para arremessar a bola, a corrente que a solenoide puxa e o tempo de pulso adequado só se
+descobrem experimentando. Esses três números são justamente os que o circuito precisa para ser
+dimensionado. Projetar antes de conhecê-los seria escolher componente por estimativa.
 
-## 12.5 Passo 1: mapa do playfield
+O layout do playfield vem depois do protótipo porque as dimensões reais do mecanismo montado, com
+suporte e curso, determinam quanto espaço cada elemento ocupa na mesa.
 
-Este é o trabalho a fazer com a mesa na frente. Os furos já existentes são a melhor pista do que a
-turma anterior pretendia, e vale aproveitá-los em vez de furar de novo.
-
-Numere cada furo e preencha:
-
-| Nº | Posição na mesa | Diâmetro | O que vai ali | Tipo de I/O |
-|---|---|---|---|---|
-| 1 | | | | |
-| 2 | | | | |
-| 3 | | | | |
-| 4 | | | | |
-| 5 | | | | |
-
-Em "Tipo de I/O", use uma das opções: entrada de sensor, saída de solenoide, saída de luz, ou nenhum,
-para furo puramente mecânico.
-
-O que se sabe da foto e que serve de ponto de partida:
-
-| Região | O que se vê | Hipótese |
-|---|---|---|
-| Arco superior | Três furos de cerca de 10 mm, alinhados | Luzes, ou alvos com sensor |
-| Região do palhaço | Um furo de cerca de 10 mm à esquerda, um poste amarelo | Bumper ou alvo |
-| Base | Dois furos com anel, simétricos | Eixos dos flippers |
-| Bordas amarelas | Muitos furos de cerca de 3 mm | Fixação de guias e postes |
-| Lateral direita | Rampa lateral | Entrada da bola, injetor |
-
-Confirme cada hipótese medindo, e principalmente pergunte à turma anterior, que é a única fonte
-sobre a intenção original. Isso já está no quadro de atividades.
-
-Uma decisão de escopo que vale tomar aqui: **quantos elementos ativos a mesa realmente precisa**. O
-projeto anterior previa dez solenoides e doze LEDs, e não chegou a montar nenhum. Uma mesa jogável
-com dois flippers, dois bumpers, um injetor e alguns alvos já entrega a experiência completa, com
-metade do trabalho. Sobra tempo para acabamento, que é o que a etapa anterior não teve.
-
-## 12.6 Passo 2: contagem de I/O
+## 12.5 Passo 1: contagem de I/O
 
 Do mapa do playfield sai esta tabela, que é a que define o circuito:
 
@@ -142,7 +111,7 @@ Do mapa do playfield sai esta tabela, que é a que define o circuito:
 | Luzes de playfield | | Saída de luz |
 | **Total de luzes** | | |
 
-## 12.7 Passo 3: arquitetura
+## 12.6 Passo 2: arquitetura
 
 Com os totais em mãos, as regras de decisão são simples.
 
@@ -170,7 +139,7 @@ temporização precisa no envio dos dados, o que em Raspberry Pi se resolve com 
 **Expansores.** Some os pinos de comando que sobraram e divida por oito. Se o resultado for um ou
 dois PCF8574 em vez de três, melhor. E desta vez os endereços ficam distintos desde o desenho.
 
-## 12.8 Passo 4: qual ferramenta usar
+## 12.7 Passo 3: qual ferramenta usar
 
 Aqui vale uma correção sobre o Tinkercad. Ele tem duas ferramentas diferentes no mesmo site:
 
@@ -198,7 +167,7 @@ receber um esquemático que ninguém conseguia ler.
 Se o tempo apertar, fazer tudo no Proteus é aceitável. Nesse caso, a regra abaixo passa a ser
 obrigatória.
 
-## 12.9 Regras para o esquemático novo
+## 12.8 Regras para o esquemático novo
 
 Estas regras existem para que o próximo grupo não passe pelo que este passou.
 
@@ -219,22 +188,14 @@ crítica.
 **Exporte junto do arquivo.** A cada versão, exporte o esquemático em PDF e a netlist em texto, e
 faça commit dos três. Assim a informação sobrevive mesmo sem a ferramenta.
 
-## 12.10 Impacto no cronograma
+## 12.9 Impacto no cronograma
 
-A decisão altera o conteúdo dos sprints, mas não as datas. A comparação:
+A decisão de redesenhar, somada à decisão de 13/08 de começar pelos mecanismos, altera o conteúdo dos
+sprints sem mudar as datas. A ordem passou a ser de baixo para cima: primeiro fazer o mecanismo
+funcionar de verdade, depois desenhar em cima do que se aprendeu.
 
-| Sprint | Era | Passa a ser |
-|---|---|---|
-| 0 | Levantar o mapeamento do esquemático antigo | Mapear o playfield e definir o escopo de jogo |
-| 1 | Corrigir os erros do esquemático antigo | Desenhar o esquemático novo e fechar a lista de materiais |
-| 2 | Bancada com o circuito antigo | Bancada com o circuito novo, sem mudança de conteúdo |
-| 3 a 5 | Sem alteração | Sem alteração |
-
-O saldo é levemente positivo. Perde-se o tempo de desenhar do zero, mas ganha-se o tempo que seria
-gasto decifrando fios cruzados e o retrabalho de corrigir quatro pendências estruturais num desenho
-alheio.
+O cronograma revisado está em [10. Plano do semestre](10-plano-do-semestre.md).
 
 ---
 
-Anterior: [11. Ficha de levantamento](11-ficha-de-levantamento.md) ·
-Próximo: [13. Design do playfield](13-design-do-playfield.md)
+Anterior: [11. Ficha de levantamento](11-ficha-de-levantamento.md)
