@@ -41,7 +41,6 @@ das falhas intermitentes de comunicação relatadas no relatório anterior. O di
 | [10. Plano do semestre](docs/10-plano-do-semestre.md) | Calendário de aulas, sprints e riscos |
 | [11. Ficha de levantamento](docs/11-ficha-de-levantamento.md) | Formulário a preencher no Sprint 0 |
 | [12. Projeto novo do circuito](docs/12-projeto-novo-do-circuito.md) | Decisão de redesenhar e o caminho para isso |
-| [10. Plano do semestre](docs/10-plano-do-semestre.md) | Cronograma 2026.2, sprints e riscos |
 
 ## Arquitetura em uma figura
 
