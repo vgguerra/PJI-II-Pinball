@@ -28,7 +28,7 @@ impressas em 3D. A lógica de jogo não foi implementada.
 O gabinete está pronto e o playfield está decorado, com a arte montada em camadas de MDF recortadas.
 Estão instaladas as guias de bola brancas, um poste amarelo e alguns reforços, e os furos de montagem
 já existem: três maiores no arco superior, dois com anel na região dos flippers e vários de parafuso
-ao longo das bordas. A caixa mede 450 x 900 mm.
+ao longo das bordas. A caixa mede 45 x 90 cm.
 
 Não há nenhuma eletrônica instalada: nenhum sensor, solenoide, LED, fio, conector ou placa. A
 eletrônica do projeto anterior nunca saiu do papel.
