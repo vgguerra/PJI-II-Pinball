@@ -26,3 +26,9 @@ altere `modo_visualizacao` para `"flipper"`, `"eixo"`, `"base"`, `"alavanca"` ou
 
 Antes de imprimir o conjunto definitivo, confira as dimensões do eixo, a espessura do playfield e
 as folgas na sua impressora. Os parâmetros atuais ainda precisam ser validados no protótipo físico.
+
+## Drop target
+
+O diretório [`drop-target`](drop-target/README.md) contém dois bancos paramétricos de 120 × 60 mm,
+cada um com três alvos independentes, além das guias, braços de servo, bases inferiores e da
+montagem completa para medição.
