@@ -2,10 +2,12 @@
 
 # 07. Mecânica
 
-O conteúdo deste documento vem do relatório da etapa anterior,
-[`Projeto_Integrador_II___Pinball.pdf`](../upstream/pinball/Projeto_Integrador_II___Pinball.pdf),
-que é a única fonte sobre a parte mecânica. Não há arquivos de modelo 3D versionados no repositório,
-o que é uma lacuna registrada em [P11](09-pendencias-e-roadmap.md).
+O histórico deste documento vem do relatório da etapa anterior,
+[`Projeto_Integrador_II___Pinball.pdf`](../upstream/pinball/Projeto_Integrador_II___Pinball.pdf).
+O novo modelo paramétrico do mecanismo do flipper está versionado em
+[`mecanica/modelos-3d`](../mecanica/modelos-3d/README.md). Os arquivos usados para fabricar as demais
+peças originais ainda não foram recuperados, conforme registrado em
+[P11](09-pendencias-e-roadmap.md).
 
 ## 7.1 Processo de projeto
 
@@ -87,8 +89,9 @@ curto e a equipe de duas pessoas explica boa parte do atraso do cronograma.
 
 ## 7.5 Recomendações para a continuidade
 
-Versionar os arquivos de modelo. Colocar os `.stl` e, quando existirem, os arquivos de projeto
-editáveis, em uma pasta `hardware/3d/` do repositório. Um `.stl` perdido significa reprojetar a peça.
+Continuar versionando os modelos em `mecanica/modelos-3d/`. Incluir tanto os arquivos exportados
+(`.stl` ou `.3mf`) quanto os arquivos de projeto editáveis. Um modelo perdido significa reprojetar
+a peça.
 
 Registrar os parâmetros de impressão que funcionaram: material, altura de camada, preenchimento e
 orientação. Sem isso, cada reimpressão é uma nova rodada de tentativa e erro.

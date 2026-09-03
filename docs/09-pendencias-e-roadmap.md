@@ -20,7 +20,7 @@ comparar o esquemático com o código, e lacunas de projeto identificadas na rev
 | [P8](#p8-licença-declarada-mas-ausente) | Licença declarada mas sem arquivo | Médio |
 | [P9](#p9-repique-de-contato-sem-tratamento) | Repique de contato sem tratamento | Médio |
 | [P10](#p10-corrente-dos-leds-abaixo-do-previsto) | Corrente dos LEDs abaixo do previsto | Baixo |
-| [P11](#p11-arquivos-3d-não-versionados) | Arquivos 3D não versionados | Médio |
+| [P11](#p11-arquivos-3d-originais-não-recuperados) | Arquivos 3D originais não recuperados | Médio |
 | [P12](#p12-problemas-menores-de-código) | Problemas menores de código | Baixo |
 
 ## P1. Conflito de endereço I2C nos três PCF8574
@@ -317,20 +317,22 @@ Como observação de projeto, e não como erro: usar um L293D para acender quatr
 recurso. Um ULN2803, com oito canais Darlington no mesmo tamanho de encapsulamento, cobriria os doze
 LEDs com dois CIs em vez de três, com queda de tensão menor e custo mais baixo.
 
-## P11. Arquivos 3D não versionados
+## P11. Arquivos 3D originais não recuperados
 
 **Gravidade: médio.**
 
-O relatório descreve em detalhe as peças mecânicas modeladas e impressas, e cita os modelos de
-referência usados, mas nenhum arquivo `.stl`, `.3mf` ou de projeto editável está no repositório.
+O relatório descreve em detalhe as peças mecânicas modeladas e impressas e cita os modelos de
+referência usados, mas os arquivos que deram origem às peças da etapa anterior não estão no
+repositório. Há um novo modelo editável do flipper em `mecanica/modelos-3d/`, porém ele ainda precisa
+ser validado no protótipo físico e não substitui os modelos históricos das demais peças.
 
 Se uma peça quebrar, e o relatório registra que peças quebraram durante os testes, será necessário
 reprojetá-la do zero. O trabalho de modelagem, que consumiu boa parte do semestre, está preservado
 apenas nas máquinas de quem o fez.
 
-A ação é recuperar os arquivos com os autores originais e versioná-los em uma pasta `hardware/3d/`,
-junto com um arquivo registrando os parâmetros de impressão que funcionaram: material, altura de
-camada, preenchimento e orientação de cada peça.
+A ação é recuperar os arquivos com os autores originais e versioná-los em
+`mecanica/modelos-3d/`, junto com um registro dos parâmetros de impressão que funcionaram: material,
+altura de camada, preenchimento e orientação de cada peça.
 
 ## P12. Problemas menores de código
 

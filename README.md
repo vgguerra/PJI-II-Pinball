@@ -112,6 +112,8 @@ PJI-II-Pinball/
 │   ├── 01-visao-geral.md
 │   ├── ...
 │   └── assets/             imagens e recortes do esquemático
+├── mecanica/
+│   └── modelos-3d/         modelos paramétricos em OpenSCAD
 ├── tools/
 │   └── levantar_entradas.py    levantamento do mapeamento sensor para GPIO
 ├── upstream/
@@ -160,5 +162,3 @@ Integrador II.
 ## Licença
 
 O repositório da etapa anterior declara a MIT License no README, mas não inclui o arquivo `LICENSE`.
-Enquanto isso não for resolvido com os autores originais, a licença deste material deve ser
-considerada indefinida. Ver [Pendências, item P8](docs/09-pendencias-e-roadmap.md).
