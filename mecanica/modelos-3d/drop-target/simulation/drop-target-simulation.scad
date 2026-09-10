@@ -36,9 +36,14 @@ show_cord = true;
 // O intervalo total é normalizado para $t entre 0 e 1.
 impact_time = 0.28;
 drop_duration = 0.10;
-release_duration = 0.08;
-reset_start = 0.64;
-reset_duration = 0.24;
+release_duration = 0.18;
+// Atraso entre o fim da queda/liberação (0,56) e o início da subida
+// sincronizada (0,64): 0,08 do ciclo. Durante esse intervalo o alvo fica
+// abaixado e o braço permanece parado.
+reset_start = 1.64;
+// 0,36 leva a subida sincronizada de 0,64 até 1,00, fechando o ciclo antes
+// da animação reiniciar.
+reset_duration = 0.36;
 
 // O braço do servo é a peça laranja da foto. O ângulo 0° deixa a ponta longa
 // voltada para o ponto de amarração do alvo levantado.
@@ -103,9 +108,13 @@ function release_fraction() =
     ));
 
 function servo_angle_animation() =
+    // 1) impacto e queda: o braço segura a posição, sem puxar o alvo;
+    // 2) alvo já embaixo: o braço vai para a posição de soltura;
+    // 3) retorno: braço e alvo sobem juntos no mesmo intervalo.
     $t < impact_time + drop_duration ? arm_lift_angle :
-    $t < reset_start ?
+    $t < impact_time + drop_duration + release_duration ?
         mix(arm_lift_angle, arm_rest_angle, release_fraction()) :
+    $t < reset_start ? arm_rest_angle :
         mix(arm_rest_angle, arm_lift_angle, reset_fraction());
 
 function servo_angle() =

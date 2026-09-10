@@ -42,8 +42,9 @@ target_state = "animado";
 ```
 
 Os principais ajustes estão no início do arquivo: `simulation_servo_shaft`,
-`arm_rest_angle`, `cord_sag`, `impact_time`, `reset_start` e
-`reset_duration`. O eixo foi colocado em `[6, -54.5, 31]` no sistema da gaiola:
+`arm_rest_angle`, `cord_sag`, `impact_time`, `reset_start`,
+`drop_duration`, `release_duration` e `reset_duration`. O eixo foi colocado em
+`[6, -54.5, 31]` no sistema da gaiola:
 o corpo do SG90 fica deitado dentro da janela lateral esquerda, o eixo aponta
 para cima e o braço entra no vão na horizontal. A ponta fina do braço longo
 fica à frente e abaixo do alvo, próxima do ponto de amarração. Ao instalar o
