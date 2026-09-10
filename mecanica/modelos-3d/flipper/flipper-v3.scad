@@ -58,8 +58,13 @@ ang_offset_contato = asin((d_pino_batente/2 + 3.0) / raio_batente);
 largura_haste_quadrada = 8.0;   
 espessura_haste        = 8.0;   
 curso_haste            = 120.0; 
-comp_oblongo           = 10.0;  // Compensação perfeita para a variação em Y de ~5.4mm
+comp_oblongo           = 10.0;  
 folga_slot             = 0.4;   
+
+// 7. Botão do Jogador (Peça Separada)
+raio_botao         = 15.0; // 30mm de diâmetro
+espessura_botao    = 10.0; // Espessura bruta do botão
+prof_encaixe_botao = 7.0;  // Furo cego (sobra 3mm de parede lisa para o toque)
 
 // Linha média de guiamento em Y (onde o rasgo fica centralizado)
 y_linha_guia_haste = -comp_alavanca + (comp_oblongo / 2);
@@ -82,7 +87,7 @@ pino_y_atual = -comp_alavanca * cos(ang_atual);
 
 // ====================================================================
 // CONTROLE DE VISUALIZAÇÃO
-// Opções: "montagem", "mesa_impressao", "flipper", "eixo", "base", "alavanca", "haste"
+// Opções: "montagem", "mesa_impressao", "flipper", "eixo", "base", "alavanca", "haste", "botao"
 // ====================================================================
 modo_visualizacao = "montagem";
 
@@ -93,7 +98,6 @@ module prisma_hexagonal(d, h) {
     cylinder(r = (d / 2) / cos(30), h = h, $fn = 6);
 }
 
-// 1. FLIPPER SUPERIOR
 module flipper() {
     difference() {
         hull() {
@@ -121,7 +125,6 @@ module flipper() {
     }
 }
 
-// 2. EIXO SEXTAVADO COM FLANGE ANTI-QUEDA
 module eixo() {
     union() {
         prisma_hexagonal(eixo_sextavado_d, altura_total_eixo);
@@ -129,7 +132,6 @@ module eixo() {
     }
 }
 
-// 3. BASE / MANCAL COM GUIA INTEGRADO E POSTE UNIVERSAL
 module base_suporte_com_stops() {
     altura_guia_z = h_aba + altura_mancal + altura_alavanca + espessura_haste;
     folga_guia = 0.8;
@@ -142,44 +144,34 @@ module base_suporte_com_stops() {
 
     difference() {
         union() {
-            // Cubo central do mancal
             cylinder(r = raio_mancal + 3, h = altura_mancal + h_aba);
 
-            // Braço rígido ligando o mancal à torre guia
             hull() {
                 cylinder(r = raio_mancal, h = h_aba);
                 translate([-45, y_guia_interno, 0])
                     cylinder(r = largura_haste_quadrada/2 + 3.5, h = h_aba);
             }
 
-            // Setor arqueado dos batentes e parafuso central
             hull() {
                 cylinder(r = raio_mancal, h = h_aba);
                 rotate([0, 0, ang_b1])
-                    translate([raio_batente, 0, 0])
-                        cylinder(r = d_pino_batente/2 + 3.5, h = h_aba);
+                    translate([raio_batente, 0, 0]) cylinder(r = d_pino_batente/2 + 3.5, h = h_aba);
                 rotate([0, 0, ang_b2])
-                    translate([raio_batente, 0, 0])
-                        cylinder(r = d_pino_batente/2 + 3.5, h = h_aba);
+                    translate([raio_batente, 0, 0]) cylinder(r = d_pino_batente/2 + 3.5, h = h_aba);
                 rotate([0, 0, ang_meio_batentes])
-                    translate([raio_parafuso_batente, 0, 0])
-                        cylinder(r = 5.5, h = h_aba);
+                    translate([raio_parafuso_batente, 0, 0]) cylinder(r = 5.5, h = h_aba);
             }
 
-            // Braço estendido que ancora o poste da mola
             hull() {
                 cylinder(r = raio_mancal, h = h_aba);
                 rotate([0, 0, ang_ancora_mola])
-                    translate([dist_ancora_mola, 0, 0])
-                        cylinder(r = d_poste_mola/2 + 2.0, h = h_aba);
+                    translate([dist_ancora_mola, 0, 0]) cylinder(r = d_poste_mola/2 + 2.0, h = h_aba);
             }
 
-            // POSTE 100% MACIÇO (Sem canal/cintura frágil)
             rotate([0, 0, ang_ancora_mola])
                 translate([dist_ancora_mola, 0, h_aba])
                     cylinder(d = d_poste_mola, h = altura_poste_mola);
 
-            // Orelhas de fixação na madeira (M3/M4)
             hull() {
                 translate([-45, y_guia_interno, 0]) cylinder(r = 4, h = h_aba);
                 translate([-42, y_guia_interno + 10, 0]) cylinder(r = 5, h = h_aba);
@@ -193,7 +185,6 @@ module base_suporte_com_stops() {
                 translate([12, 22, 0]) cylinder(r = 5, h = h_aba);
             }
 
-            // Pinos batentes verticais
             rotate([0, 0, ang_b1])
                 translate([raio_batente, 0, h_aba])
                     cylinder(d = d_pino_batente, h = altura_batente);
@@ -202,86 +193,69 @@ module base_suporte_com_stops() {
                 translate([raio_batente, 0, h_aba])
                     cylinder(d = d_pino_batente, h = altura_batente);
 
-            // Bloco maciço da torre guia da haste
             translate([-45, y_guia_interno - (largura_haste_quadrada/2 + 3.5), 0])
                 cube([14, largura_haste_quadrada + 7, altura_guia_z]);
         }
         
-        // Furo central passante para o eixo
         translate([0, 0, -1])
             cylinder(d = eixo_sextavado_d + 1.5, h = altura_mancal + h_aba + altura_batente + 5);
         
-        // Furos de fixação na madeira
         translate([-42, y_guia_interno + 10, -1]) cylinder(d=3.5, h=h_aba + 2);
         translate([-42, y_guia_interno - 14, -1]) cylinder(d=3.5, h=h_aba + 2);
         translate([12, 22, -1])                   cylinder(d=3.5, h=h_aba + 2);
 
-        // Furo centralizado entre os batentes
         rotate([0, 0, ang_meio_batentes])
             translate([raio_parafuso_batente, 0, -1])
                 cylinder(d=3.5, h=h_aba + 2);
 
-        // FURO HORIZONTAL PASSANTE NO POSTE MACIÇO
         rotate([0, 0, ang_ancora_mola])
             translate([dist_ancora_mola, 0, h_aba + z_furo_transv])
                 rotate([90, 0, 0])
                     cylinder(d = d_furo_mola, h = d_poste_mola + 4, center = true);
 
-        // Túnel passante para a haste quadrada deslizar
         translate([-50, y_guia_interno - (largura_haste_quadrada + folga_guia)/2, altura_guia_z - espessura_haste - folga_guia/2])
             cube([25, largura_haste_quadrada + folga_guia, espessura_haste + folga_guia]);
     }
 }
 
-// 4. ALAVANCA INFERIOR
 module alavanca_com_dente() {
     difference() {
         union() {
-            // Braço mecânico principal
             hull() {
                 cylinder(r = raio_alavanca, h = altura_alavanca);
                 translate([0, -comp_alavanca, 0])
                     cylinder(r = d_pino_articulacao/2 + 3.2, h = altura_alavanca);
             }
             
-            // Aba lateral de fixação de mola/elástico
             hull() {
-                translate([0, -dist_mola_alavanca, 0])
-                    cylinder(r = 4.5, h = altura_alavanca);
-                translate([-11, -dist_mola_alavanca, 0])
-                    cylinder(r = 4.5, h = altura_alavanca);
+                translate([0, -dist_mola_alavanca, 0]) cylinder(r = 4.5, h = altura_alavanca);
+                translate([-11, -dist_mola_alavanca, 0]) cylinder(r = 4.5, h = altura_alavanca);
             }
             
-            // Dente de batente a +45°
             rotate([0, 0, ang_dente])
                 hull() {
                     cylinder(r = raio_alavanca, h = altura_alavanca);
-                    translate([raio_batente, 0, 0])
-                        cylinder(r = 3.0, h = altura_alavanca);
+                    translate([raio_batente, 0, 0]) cylinder(r = 3.0, h = altura_alavanca);
                 }
 
-            // Pino inferior reforçado (5.0mm)
             translate([0, -comp_alavanca, -espessura_haste])
                 cylinder(d = d_pino_articulacao, h = espessura_haste + 1);
         }
         
-        // Encaixe fêmea sextavado para o eixo
         translate([0, 0, -espessura_haste - 1])
             prisma_hexagonal(eixo_sextavado_d + folga_impressao, altura_alavanca + espessura_haste + 2);
             
-        // Furo horizontal para gancho de mola / elástico dobrado
         translate([-11, -dist_mola_alavanca, altura_alavanca / 2])
             rotate([0, 90, 0])
                 cylinder(d = d_furo_elastico_alavanca, h = 15, center = true);
 
-        // Canal externo vertical para laçar elástico
         translate([-11, -dist_mola_alavanca, altura_alavanca / 2])
             rotate([90, 0, 0])
                 cylinder(d = 3.0, h = 12, center = true);
     }
 }
 
-// 5. HASTE DE ACIONAMENTO QUADRADA
+// HASTE PURA SEM O BOTÃO
 module haste_acionamento() {
     largura_cabeca_slot = d_pino_articulacao + 8;
 
@@ -294,21 +268,28 @@ module haste_acionamento() {
                     cylinder(r = largura_cabeca_slot / 2, h = espessura_haste);
             }
             
+            // Corpo reto quadrado sem a terminação redonda
             translate([-curso_haste, -largura_haste_quadrada / 2, 0])
                 cube([curso_haste, largura_haste_quadrada, espessura_haste]);
-            
-            translate([-curso_haste, 0, 0])
-                cylinder(r = 11, h = espessura_haste);
         }
         
-        // Rasgo oblongo no eixo Y com folga adequada para o pino de 5mm
         translate([0, 0, -1])
             hull() {
-                translate([0, -comp_oblongo / 2, 0])
-                    cylinder(d = d_pino_articulacao + folga_slot, h = espessura_haste + 2);
-                translate([0, comp_oblongo / 2, 0])
-                    cylinder(d = d_pino_articulacao + folga_slot, h = espessura_haste + 2);
+                translate([0, -comp_oblongo / 2, 0]) cylinder(d = d_pino_articulacao + folga_slot, h = espessura_haste + 2);
+                translate([0, comp_oblongo / 2, 0]) cylinder(d = d_pino_articulacao + folga_slot, h = espessura_haste + 2);
             }
+    }
+}
+
+// MÓDULO DO NOVO BOTÃO
+module botao_haste() {
+    difference() {
+        // Corpo circular liso
+        cylinder(r = raio_botao, h = espessura_botao);
+        
+        // Furo quadrado cego no centro (dimensionado para abraçar a haste 8x8mm com folga)
+        translate([-(largura_haste_quadrada + folga_impressao)/2, -(espessura_haste + folga_impressao)/2, espessura_botao - prof_encaixe_botao])
+            cube([largura_haste_quadrada + folga_impressao, espessura_haste + folga_impressao, prof_encaixe_botao + 1]);
     }
 }
 
@@ -350,13 +331,21 @@ if (modo_visualizacao == "montagem") {
         translate([pino_x_atual, y_linha_guia_haste, z_alavanca - espessura_haste]) 
             haste_acionamento();
 
+    // 6. Botão Separado encaixado na haste
+    color("purple")
+        translate([pino_x_atual - curso_haste - espessura_botao, y_linha_guia_haste, z_alavanca - espessura_haste/2])
+            rotate([0, 90, 0]) // Gira para alinhar o rasgo com a ponta da haste
+                botao_haste();
+
 } else if (modo_visualizacao == "mesa_impressao") {
-    // Arranjo ordenado com todas as peças orientadas na melhor face de impressão
     translate([-15, 35, altura_flipper]) rotate([180, 0, 0]) flipper();
     translate([-65, 35, 0]) rotate([0, 90, 0]) eixo();
     translate([35, 35, 0]) base_suporte_com_stops();
     translate([-35, -25, 0]) rotate([180, 0, 0]) alavanca_com_dente();
     translate([30, -25, 0]) rotate([0, 0, 90]) haste_acionamento();
+    
+    // Botão posicionado na mesa para imprimir com a face lisa e bonita para cima
+    translate([-20, -60, 0]) botao_haste();
 
 } else if (modo_visualizacao == "flipper") {
     flipper();
@@ -368,4 +357,6 @@ if (modo_visualizacao == "montagem") {
     alavanca_com_dente();
 } else if (modo_visualizacao == "haste") {
     haste_acionamento();
+} else if (modo_visualizacao == "botao") {
+    botao_haste();
 }
