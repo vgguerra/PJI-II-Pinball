@@ -1,172 +1,147 @@
 include <parameters.scad>
-use <target.scad>
 use <cage.scad>
-use <servo_stick.scad>
-use <base.scad>
+use <target.scad>
 
-// "montagem_dupla", "unidade", "explodida", "alvo", "gaiola",
-// "braco_servo" ou "base".
-view_mode = "montagem_dupla";
+// Validação geométrica do drop target ORIGINAL.
+//
+// Esta etapa intentionally mostra somente UMA gaiola e UM alvo. O servo, a
+// alavanca e o micro-switch entram depois que o encaixe dos STL e a abertura
+// do playfield forem aprovados.
+//
+// Coordenadas dos STL antes da montagem:
+//   X = largura da gaiola
+//   Y = comprimento/altura
+//   Z = profundidade
+//
+// Na montagem, a unidade gira 90 graus em X. O topo da gaiola fica alinhado à
+// face inferior do playfield e a cabeça do alvo sobe pela abertura.
 
-// "elevado", "baixado", "animado" ou "individual". No último caso,
-// altere target_states em parameters.scad para controlar cada alvo.
-target_state = "elevado";
+// "unidade"  : uma gaiola e um alvo, fora do playfield
+// "playfield": playfield 450 x 900 com UMA abertura e a unidade instalada
+// "abertura" : somente o playfield e a abertura nominal de 30 x 10 mm
+// "gaiola"   : peça de referência isolada
+// "alvo"     : peça de referência isolada
+view_mode = "playfield";
+
+// "levantado", "baixado" ou "animado".
+target_state = "levantado";
 
 show_playfield = true;
-show_hardware = true;
+show_target = true;
 
-animation_factor = (1 - cos($t * 360)) / 2;
+// Escala de validação. 1.0 reproduz os STL originais; 1.15 e 1.20 são apenas
+// alternativas para avaliar se o alvo precisa ficar mais visível no pinball.
+reference_scale = 1.0;
 
-function drop_for_state(state) =
-    state == "baixado" ? target_drop_travel :
-    state == "animado" ? target_drop_travel * animation_factor :
-    0;
+function clamp01(v) = min(1, max(0, v));
+function smooth(v) = v * v * (3 - 2 * v);
 
-function arm_angle_for_state(state) =
-    state == "baixado" ? servo_angle_dropped :
-    state == "animado"
-        ? servo_angle_raised
-            + (servo_angle_dropped - servo_angle_raised) * animation_factor
-        : servo_angle_raised;
+function target_lift() =
+    target_state == "levantado" ? 1 :
+    target_state == "baixado" ? 0 :
+    let (
+        queda = 1 - smooth(clamp01(
+            ($t - target_drop_time) / target_drop_duration
+        )),
+        retorno = smooth(clamp01(
+            ($t - reset_start) / reset_duration
+        ))
+    )
+    max(queda, retorno);
 
-function state_for_target(bank_state, index) =
-    bank_state == "individual" ? target_states[index] : bank_state;
+function target_y_offset() =
+    target_drop_offset + target_lift() * target_travel;
 
-function angle_for_bank(index, count) =
-    count == 2
-        ? (index == 0 ? -target_bank_angle : target_bank_angle)
-        : 0;
-
-module servo_mockup() {
-    color("dimgray", 0.75)
-        translate([
-            servo_axis_x - servo_width / 2,
-            -servo_depth / 2,
-            base_z + base_thickness
-        ])
-            cube([servo_width, servo_depth, servo_height]);
-
-    color("silver")
-        translate([servo_axis_x, 0, servo_axis_z])
-            rotate([90, 0, 0])
-                cylinder(d = 5, h = servo_depth + 5, center = true);
-}
-
-module microswitch_mockup() {
-    color("black", 0.75)
-        translate([
-            0,
-            guide_depth / 2 + 2,
-            -playfield_thickness - 28
-        ])
-            cube([20, 7, 10], center = true);
-}
-
-module target_unit(index = 0, state = target_state, exploded = 0) {
-    drop = drop_for_state(state);
-    target_x = (index - (targets_per_bank - 1) / 2) * target_pitch;
-
-    color("firebrick")
-        translate([
-            target_x,
-            -exploded,
-            target_bottom_above_playfield - drop
-        ])
-            target();
-
-    if (show_hardware && exploded == 0)
-        translate([target_x, 0, 0])
-            microswitch_mockup();
-}
-
-module drop_target_bank(state = target_state, exploded = 0) {
-    arm_angle = arm_angle_for_state(state);
-
-    for (index = [0 : targets_per_bank - 1])
-        target_unit(index, state_for_target(state, index), exploded);
-
-    color("royalblue")
-        translate([0, exploded, 0])
+// Posição do alvo no playfield. O valor X é a borda esquerda da cabeça
+// nominal de 30 mm; 210 mm centraliza essa cabeça em X = 225 mm.
+module reference_unit_local() {
+    color("dimgray")
+        scale([reference_scale, reference_scale, reference_scale])
             cage();
 
-    color("slategray")
-        translate([0, 0, base_z - exploded])
-            drop_target_base();
-
-    color("orange")
-        translate([servo_axis_x, 0, servo_axis_z])
-            rotate([0, arm_angle, 0])
-                rotate([90, 0, 0])
-                    servo_stick();
-
-    if (show_hardware && exploded == 0)
-        servo_mockup();
+    if (show_target)
+        color("gold")
+            translate([
+                0,
+                target_y_offset() * reference_scale,
+                target_depth_offset * reference_scale
+            ])
+                scale([reference_scale, reference_scale, reference_scale])
+                    target();
 }
 
-module playfield_preview(count = bank_count) {
-    slot_depth = max(target_thickness, target_stem_thickness)
-        + 2 * print_clearance;
+// A gaiola é fornecida deitada. A translação Z = 1 faz o topo original
+// Y = -1 coincidir com Z = 0 antes de aplicar a posição sob o playfield.
+module standing_reference_unit(origin = [0, 0, 0]) {
+    translate([origin[0], origin[1], origin[2] + 1])
+        rotate([90, 0, 0])
+            reference_unit_local();
+}
 
-    color("burlywood", 0.35)
-        difference() {
-            translate([
-                -playfield_width / 2,
-                -playfield_preview_depth / 2,
-                -playfield_thickness
-            ])
+// A cabeça tem 30 x 8 mm. O desenho do usuário reserva 30 x 10 mm; usamos
+// 10 mm de profundidade nominal e 0,5 mm de folga lateral na largura.
+playfield_opening_width = target_width * reference_scale
+    + 2 * playfield_slot_clearance;
+playfield_opening_depth = 10 * reference_scale;
+
+// Depois da rotação, a cabeça ocupa Y = -target_depth_offset até
+// -target_depth_offset - target_head_thickness. O centro fica em 6 mm à
+// frente da origem da unidade para os parâmetros atuais.
+playfield_opening_center_y = -target_depth_offset * reference_scale
+    - target_head_thickness * reference_scale / 2;
+
+module playfield_opening(origin = [reference_module_target_left,
+    reference_module_origin_y, -playfield_thickness]) {
+    translate([
+        origin[0] - playfield_slot_clearance,
+        origin[1] + playfield_opening_center_y
+            - playfield_opening_depth / 2,
+        -playfield_thickness - epsilon
+    ])
+        cube([
+            playfield_opening_width,
+            playfield_opening_depth,
+            playfield_thickness + 2 * epsilon
+        ]);
+}
+
+module playfield_with_one_unit() {
+    difference() {
+        color("burlywood", 0.55)
+            translate([0, 0, -playfield_thickness])
                 cube([
                     playfield_width,
-                    playfield_preview_depth,
+                    playfield_length,
                     playfield_thickness
                 ]);
 
-            for (index = [0 : count - 1]) {
-                x = (index - (count - 1) / 2) * bank_spacing;
-                translate([x, 0, -playfield_thickness - epsilon])
-                    rotate([0, 0, angle_for_bank(index, count)])
-                        for (target_index = [0 : targets_per_bank - 1])
-                            translate([
-                                (target_index - (targets_per_bank - 1) / 2)
-                                    * target_pitch
-                                    - target_width / 2 - print_clearance,
-                                -slot_depth / 2,
-                                0
-                            ])
-                                cube([
-                                    target_width + 2 * print_clearance,
-                                    slot_depth,
-                                    playfield_thickness + 2 * epsilon
-                                ]);
-            }
-        }
+        playfield_opening();
+    }
+
+    standing_reference_unit([
+        reference_module_target_left,
+        reference_module_origin_y,
+        -playfield_thickness
+    ]);
 }
 
-module table_layout(count = bank_count, state = target_state) {
-    if (show_playfield)
-        playfield_preview(count);
-
-    for (index = [0 : count - 1])
-        translate([
-            (index - (count - 1) / 2) * bank_spacing,
-            0,
-            0
-        ])
-            rotate([0, 0, angle_for_bank(index, count)])
-                drop_target_bank(state);
-}
-
-if (view_mode == "montagem_dupla") {
-    table_layout(bank_count);
-} else if (view_mode == "unidade") {
-    drop_target_bank();
-} else if (view_mode == "explodida") {
-    drop_target_bank("elevado", 18);
-} else if (view_mode == "alvo") {
-    target();
+if (view_mode == "unidade") {
+    standing_reference_unit();
+} else if (view_mode == "playfield") {
+    playfield_with_one_unit();
+} else if (view_mode == "abertura") {
+    difference() {
+        color("burlywood", 0.55)
+            translate([0, 0, -playfield_thickness])
+                cube([
+                    playfield_width,
+                    playfield_length,
+                    playfield_thickness
+                ]);
+        playfield_opening();
+    }
 } else if (view_mode == "gaiola") {
-    cage();
-} else if (view_mode == "braco_servo") {
-    servo_stick();
-} else if (view_mode == "base") {
-    drop_target_base();
+    scale(cage_scale) cage();
+} else if (view_mode == "alvo") {
+    scale(target_scale) target();
 }

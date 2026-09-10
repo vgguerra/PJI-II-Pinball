@@ -29,6 +29,6 @@ as folgas na sua impressora. Os parâmetros atuais ainda precisam ser validados 
 
 ## Drop target
 
-O diretório [`drop-target`](drop-target/README.md) contém dois bancos paramétricos de 120 × 60 mm,
-cada um com três alvos independentes, além das guias, braços de servo, bases inferiores e da
-montagem completa para medição.
+O diretório [`drop-target`](drop-target/README.md) contém a conversão para OpenSCAD das três peças
+do drop target cujos STL estão em `drop-target/references/`: gaiola, alvo e braço do servo. Cada
+peça tem escala própria e o conjunto usa três impressões de cada arquivo.
