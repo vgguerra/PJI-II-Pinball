@@ -32,3 +32,13 @@ as folgas na sua impressora. Os parâmetros atuais ainda precisam ser validados 
 O diretório [`drop-target`](drop-target/README.md) contém a conversão para OpenSCAD das três peças
 do drop target cujos STL estão em `drop-target/references/`: gaiola, alvo e braço do servo. Cada
 peça tem escala própria e o conjunto usa três impressões de cada arquivo.
+
+## Plunger handle
+
+O diretório [`pinball-plunger`](pinball-plunger/README.md) contém o handle do lançador de
+bolinhas, ajustado para uma haste de 5,7 mm. O modelo usa encaixe interno de 6,0 mm, profundidade
+de 34 mm e furo lateral de 4,5 mm para parafuso M4.
+
+- [Modelo paramétrico em OpenSCAD](pinball-plunger/pinball-plunger-handle.scad);
+- [STL para impressão](pinball-plunger/print/pinball-plunger-handle.stl);
+- [Documentação e medidas](pinball-plunger/README.md).
