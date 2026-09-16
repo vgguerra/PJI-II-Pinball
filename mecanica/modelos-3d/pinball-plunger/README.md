@@ -19,8 +19,8 @@ A referência é um desenho em polegadas e não serve para a nossa haste:
 | Envelope | 31,75 × 53,97 × 31,75 mm | igual |
 | Diâmetro externo da base | 25,40 mm (1") | igual |
 | Furo axial | 13,21 mm (0,52") × 12,75 mm | 6,00 mm × 34,00 mm |
-| Furo do parafuso | 2,38 mm (3/32") | 4,50 mm |
-| Rebaixo da cabeça | não tem | 8,00 × 2,20 mm |
+| Furo do parafuso | 2,38 mm (3/32") | 3,30 mm, com rosca M4 |
+| Assento para o macho | não tem | 7,00 × 0,60 mm |
 
 ## Medidas do nosso arquivo
 
@@ -30,26 +30,39 @@ A referência é um desenho em polegadas e não serve para a nossa haste:
 | Folga diametral | 0,30 mm |
 | Encaixe da haste | 6,00 mm × 34,00 mm |
 | Chanfro de entrada | 14,00 mm, 4,00 mm de profundidade |
-| Furo do parafuso | 4,50 mm, passante até o encaixe |
-| Rebaixo da cabeça | 8,00 × 2,20 mm |
+| Furo do parafuso | 3,30 mm, até dentro do encaixe |
+| Assento plano no topo | 7,00 × 0,60 mm |
 | Centro do furo do parafuso | 6,35 mm da face de entrada |
-| Parede entre o rebaixo e o encaixe | 6,85 mm |
-| Volume | 24,9 cm³ |
+| Rosca disponível | 8,61 mm (~12 fios em M4) |
+| Do assento até a haste | 8,76 mm |
+| Parafuso | M4 sem cabeça, 10 mm ou mais |
+| Volume | 25,0 cm³ |
 
 O furo antigo de 13,21 mm é tapado e o encaixe novo de 6,00 mm é aberto no lugar, com 34 mm de
 profundidade. O chanfro de entrada de 14 mm guia a haste e, de quebra, tira da face frontal a borda
 do furo original, que era o que sujava a malha na boca do encaixe.
 
-O furo do parafuso desce do topo da base e **entra no encaixe da haste** — é isso que faz o parafuso
-encostar nela. Na referência o furinho de 3/32" já fazia isso; aqui ele foi aberto para 4,5 mm e
-ganhou o rebaixo de 8 × 2,2 mm, que é a medida de uma cabeça abaulada M4. Como a base é cilíndrica,
-o fundo do rebaixo é calculado a partir do ponto mais baixo dentro dele, senão a cabeça ficaria para
-fora nas bordas.
+## Como a haste fica presa
 
-**Ponto a confirmar antes de imprimir:** 4,5 mm é furo de passagem para M4, não de rosca. Do jeito
-que está, o parafuso precisa roscar na haste, que teria de receber um furo com rosca M4. Se a ideia
-for o parafuso travar direto no plástico, mude `screw_diameter` para 3,3 mm e passe macho M4, ou
-para 3,6 mm se for parafuso soberbo.
+O furo do parafuso desce do topo da base e **entra no encaixe da haste**: a ponta do parafuso aperta
+a haste contra o fundo do furo, e é esse aperto que prende as duas peças. Na referência o furinho de
+3/32" já fazia esse caminho; aqui ele foi aberto para 3,30 mm, que é a medida de furo para abrir
+rosca M4 com macho.
+
+Sobram 8,61 mm de material para a rosca, o que dá cerca de 12 fios com o passo de 0,7 mm do M4 —
+folgado para segurar. Do fundo do assento até a superfície da haste são 8,76 mm, então o parafuso
+precisa ser **mais longo que isso**: um M4 sem cabeça de 10 mm entra 1,2 mm no encaixe e encosta na
+haste com sobra. Um de 8 mm não chega a tocar.
+
+O assento plano de 7 mm no topo existe só para o macho (ou a broca) entrar esquadrejado: a base é
+cilíndrica e a ferramenta escorregaria na curvatura.
+
+**Recomendação:** lime um plano na haste no ponto onde o parafuso encosta. Parafuso de pressão
+apertando contra superfície cilíndrica e lisa escorrega com o uso, e o plunger leva tranco axial
+repetido. Com o plano, o parafuso assenta e o conjunto não gira nem desliza.
+
+Se preferir rosca de metal, troque `screw_diameter` para 6,0 mm e use insert térmico M4 — cabe nos
+8,6 mm de parede. Para parafuso soberbo, que rosca sozinho no plástico, use 3,6 mm.
 
 ## Impressão
 

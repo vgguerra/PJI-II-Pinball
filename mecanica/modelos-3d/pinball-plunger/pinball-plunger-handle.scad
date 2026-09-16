@@ -44,7 +44,6 @@ rod_lead_in_depth = 4.0;
 //   3,6 mm -> se for usar parafuso soberbo, que rosca sozinho no plástico
 //   6,0 mm -> se for usar insert térmico M4, que dá rosca de metal
 screw_diameter = 3.3;
-screw_thread_depth = 9.7;   // material disponível, do topo até o encaixe
 
 // Assento plano no topo, só para o macho (ou a broca) entrar esquadrejado: a
 // base é cilíndrica e a ferramenta escorregaria na curva.
@@ -103,6 +102,15 @@ module screw_seat() {
             d = screw_seat_diameter
         );
 }
+
+// Conferência das medidas que dependem do conjunto, impressa ao renderizar.
+rod_top_z = axis_z + rod_diameter / 2;
+bore_top_z = axis_z + rod_bore_diameter / 2;
+echo(str(
+    "rosca disponivel: ", screw_seat_z - bore_top_z,
+    " mm | do assento ate a haste: ", screw_seat_z - rod_top_z,
+    " mm (use parafuso mais longo que isso)"
+));
 
 difference() {
     union() {
