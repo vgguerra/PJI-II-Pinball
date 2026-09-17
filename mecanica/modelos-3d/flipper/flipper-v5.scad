@@ -96,6 +96,8 @@ pino_y_atual = -comp_alavanca * cos(ang_atual);
 //
 // "montagem"       -> Visualização completa no pinball (use o Animate para testar)
 // "mesa_impressao" -> As 5 peças novas deitadas na mesa (prontas para fatiar juntas)
+// "flipper"        -> Isola apenas o Flipper superior (com canaleta para borracha)
+// "eixo"           -> Isola apenas o Eixo sextavado central
 // "base"           -> Isola apenas a Base Traseira principal
 // "alavanca"       -> Isola apenas a Alavanca Inferior
 // "haste"          -> Isola apenas a Haste Quadrada de acionamento
@@ -281,14 +283,10 @@ module aplicar_lado() {
 aplicar_lado() {
     if (modo_visualizacao == "montagem") {
         color("crimson") translate([0, 0, espessura_madeira]) rotate([0, 0, ang_atual]) flipper();
-        
         color("burlywood", 0.35) translate([-distancia_lateral, -50, 0]) cube([190 + (distancia_lateral - 95), 90, espessura_madeira]);
-        
         color("darkgray") translate([0, 0, z_alavanca]) rotate([0, 0, ang_atual]) eixo();
         color("royalblue") translate([0, 0, 0]) rotate([180, 0, 0]) base_suporte_com_stops();
-        
         color("teal") translate([pos_x_guia, y_linha_guia_haste, 0]) rotate([180, 0, 0]) mancal_guia_frontal();
-        
         color("seagreen") translate([0, 0, z_alavanca]) rotate([0, 0, ang_atual]) alavanca_com_dente();
         color("orange") translate([pino_x_atual, y_linha_guia_haste, z_alavanca - espessura_haste]) haste_acionamento();
         color("purple") translate([pino_x_atual - curso_haste - espessura_botao, y_linha_guia_haste, z_alavanca - espessura_haste/2]) rotate([0, 90, 0]) botao_haste();
@@ -300,6 +298,8 @@ aplicar_lado() {
         translate([-30, 30, 0]) mancal_guia_frontal();
         translate([-35, 0, 0]) botao_haste();
 
+    } else if (modo_visualizacao == "flipper") { flipper();
+    } else if (modo_visualizacao == "eixo") { eixo();
     } else if (modo_visualizacao == "base") { base_suporte_com_stops();
     } else if (modo_visualizacao == "alavanca") { alavanca_com_dente();
     } else if (modo_visualizacao == "haste") { haste_acionamento();
