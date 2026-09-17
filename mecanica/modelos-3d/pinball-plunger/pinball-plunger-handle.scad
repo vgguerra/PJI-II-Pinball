@@ -25,8 +25,11 @@ top_surface_z = axis_z + base_diameter / 2;
 // ---------------------------------------------------------------------------
 // Haste
 // ---------------------------------------------------------------------------
-rod_diameter = 5.7;
-rod_clearance = 0.3;        // folga diametral para impressão FDM
+// Haste medida na peça real: 6,1 mm. A folga é generosa de propósito, porque
+// furo em FDM sai menor que o nominal e a primeira impressão, com 6,0, não
+// aceitou a haste.
+rod_diameter = 6.1;
+rod_clearance = 0.9;        // folga diametral, deixa o furo em 7,0 mm
 rod_bore_diameter = rod_diameter + rod_clearance;
 rod_bore_depth = 34.0;
 
@@ -36,24 +39,38 @@ rod_lead_in_diameter = 14.0;
 rod_lead_in_depth = 4.0;
 
 // ---------------------------------------------------------------------------
-// Parafuso de pressão: M4 sem cabeça, roscado no próprio handle
+// Parafuso de pressão
 // ---------------------------------------------------------------------------
 // O furo desce do topo da base até dentro do encaixe: a ponta do parafuso
 // aperta a haste e é isso que prende as duas peças.
-//   3,3 mm -> furo para abrir rosca M4 com macho (padrão)
-//   3,6 mm -> se for usar parafuso soberbo, que rosca sozinho no plástico
-//   6,0 mm -> se for usar insert térmico M4, que dá rosca de metal
-screw_diameter = 3.3;
+//
+// O furo é cônico: entra com 4,2 mm no assento e fecha até 3,8 mm lá embaixo,
+// junto ao encaixe da haste. O M4 começa a descer solto e vai apertando à
+// medida que avança, até morder o plástico nas últimas voltas. Assim a partida
+// é fácil, o esforço é progressivo e no fim existe aperto de verdade.
+//
+// A conicidade é suave: 0,4 mm em 7,8 mm de profundidade, pouco menos de 3° de
+// ângulo incluso. O parafuso cruza a marca dos 4,0 mm na metade do caminho, e é
+// dali para baixo que ele começa a abrir rosca.
+screw_entry_diameter = 4.2;  // no fundo do assento
+screw_end_diameter = 3.8;    // junto ao encaixe da haste
 
-// Assento plano no topo, só para o macho (ou a broca) entrar esquadrejado: a
-// base é cilíndrica e a ferramenta escorregaria na curva.
-screw_seat_diameter = 7.0;
+// Assento plano no topo. A base é cilíndrica, então sem ele a cabeça do
+// parafuso apoiaria torta e a ponta escorregaria ao começar a entrar. Os 9 mm
+// cobrem a cabeça de 8 mm de um M4 cabeça panela; com parafuso sem cabeça o
+// assento só serve de guia.
+screw_seat_diameter = 9.0;
 screw_seat_depth = 0.6;
 
 seat_edge_z = axis_z + sqrt(
     pow(base_diameter / 2, 2) - pow(screw_seat_diameter / 2, 2)
 );
 screw_seat_z = seat_edge_z - screw_seat_depth;
+
+// Cotas derivadas. A haste é medida no pior caso: empurrada pelo parafuso, ela
+// desce até o fundo do encaixe, e é dali que a ponta precisa alcançá-la.
+bore_top_z = axis_z + rod_bore_diameter / 2;
+rod_top_z = axis_z - rod_bore_diameter / 2 + rod_diameter;
 
 // ---------------------------------------------------------------------------
 // Peça
@@ -89,10 +106,21 @@ module rod_bore() {
 }
 
 // Furo do parafuso: desce do topo da base e entra no encaixe da haste, senão
-// a ponta não encosta nela. O furo original de 3/32" fica dentro deste.
+// a ponta não alcança. O furo original de 3/32" fica dentro deste.
 module screw_hole() {
-    translate([axis_x, screw_y, axis_z])
-        cylinder(h = top_surface_z - axis_z + 1, d = screw_diameter);
+    // O corte passa do assento e do encaixe, então os diâmetros das pontas são
+    // extrapolados para manter a conicidade exata entre os dois.
+    taper = (screw_entry_diameter - screw_end_diameter)
+        / (screw_seat_z - bore_top_z);
+    cut_bottom_z = bore_top_z - 1;
+    cut_top_z = top_surface_z + 1;
+
+    translate([axis_x, screw_y, cut_bottom_z])
+        cylinder(
+            h = cut_top_z - cut_bottom_z,
+            d1 = screw_end_diameter + (cut_bottom_z - bore_top_z) * taper,
+            d2 = screw_end_diameter + (cut_top_z - bore_top_z) * taper
+        );
 }
 
 module screw_seat() {
@@ -103,11 +131,10 @@ module screw_seat() {
         );
 }
 
-// Conferência das medidas que dependem do conjunto, impressa ao renderizar.
-rod_top_z = axis_z + rod_diameter / 2;
-bore_top_z = axis_z + rod_bore_diameter / 2;
+// Conferência das medidas do conjunto, impressa ao renderizar.
 echo(str(
-    "rosca disponivel: ", screw_seat_z - bore_top_z,
+    "furo conico: ", screw_entry_diameter, " -> ", screw_end_diameter,
+    " mm em ", screw_seat_z - bore_top_z,
     " mm | do assento ate a haste: ", screw_seat_z - rod_top_z,
     " mm (use parafuso mais longo que isso)"
 ));
