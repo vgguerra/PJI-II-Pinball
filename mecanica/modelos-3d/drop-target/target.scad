@@ -1,65 +1,113 @@
 include <parameters.scad>
 
-// Placa arredondada orientada no plano XZ.
-module rounded_plate_xz(width, height, depth, radius) {
+// Alvo convertido de references/target.stl.
+//
+// Orientação idêntica à do STL (deitado, como é impresso):
+//   X = largura (30 mm no vão + orelhas)   Y = comprimento   Z = espessura
+// A cabeça visível fica em Y de 0 a 30; a haste desce até Y = -50.
+
+// Contorno da haste e da cabeça, medido na base da peça (Z = 0).
+target_footprint = [
+    [0, target_head_height],
+    [target_width, target_head_height],
+    [target_width, target_tab_span[1]],
+    [target_width + target_tab_width, target_tab_span[1]],
+    [target_width + target_tab_width, target_tab_span[0]],
+    [25.4, -50], [24, -48.6], [24, -48.5],
+    [21.5, -45], [21.5, -42], [15.5, -42], [15.5, -44.59],
+    [10.79, -49.29], [10, -50],
+    [-target_tab_width, target_tab_span[0]],
+    [-target_tab_width, target_tab_span[1]],
+    [0, target_tab_span[1]]
+];
+
+// Base do pino do microswitch, com o alargamento chanfrado.
+target_pin_base = [
+    [target_pin_x[1], -40], [22, -40], [22, -45.7],
+    [24, -48.6], [24, -48.5], [target_pin_x[1], -48.5]
+];
+
+// Placa fina usada nas transições em hull().
+module target_layer(points, z) {
+    translate([0, 0, z])
+        linear_extrude(height = epsilon)
+            polygon(points);
+}
+
+module target_knot_block() {
     hull() {
-        for (x = [-width / 2 + radius, width / 2 - radius])
-            for (z = [radius, height - radius])
-                translate([x, 0, z])
-                    rotate([90, 0, 0])
-                        cylinder(r = radius, h = depth, center = true);
+        target_layer([
+            [target_knot_x[0], target_knot_base_y[0]],
+            [target_knot_x[1], target_knot_base_y[0]],
+            [target_knot_x[1], target_knot_base_y[1]],
+            [target_knot_x[0], target_knot_base_y[1]]
+        ], target_knot_z[0]);
+
+        target_layer([
+            [target_knot_x[0], target_knot_top_y[0]],
+            [target_knot_x[1], target_knot_top_y[0]],
+            [target_knot_x[1], target_knot_top_y[1]],
+            [target_knot_x[0], target_knot_top_y[1]]
+        ], target_knot_z[1] - epsilon);
     }
 }
 
-// Alvo móvel. A origem fica no centro da aresta inferior da face.
-module target(
-    face_width = target_width,
-    face_height = target_height,
-    face_thickness = target_thickness,
-    corner_radius = target_corner_radius,
-    stem_width = target_stem_width,
-    stem_thickness = target_stem_thickness,
-    stem_length = target_stem_length
-) {
+module target_pin() {
+    // Alargamento de 45° na saída da haste.
+    hull() {
+        target_layer(target_pin_base, target_plate_thickness);
+        target_layer([
+            [target_pin_x[0], -40], [target_pin_x[1], -40],
+            [target_pin_x[1], -46.69], [target_pin_x[0], -46.69]
+        ], 6 - epsilon);
+    }
+
+    // Corpo do pino, com a face inclinada que sobe até o topo.
+    hull() {
+        target_layer([
+            [target_pin_x[0], -40], [target_pin_x[1], -40],
+            [target_pin_x[1], -46.69], [target_pin_x[0], -46.69]
+        ], 6 - epsilon);
+        target_layer([
+            [target_pin_x[0], -40], [target_pin_x[1], -40],
+            [target_pin_x[1], -44], [target_pin_x[0], -44]
+        ], target_pin_top_z - epsilon);
+    }
+}
+
+module target() {
     difference() {
         union() {
-            rounded_plate_xz(
-                face_width,
-                face_height,
-                face_thickness,
-                corner_radius
-            );
+            linear_extrude(height = target_plate_thickness)
+                polygon(target_footprint);
 
-            // Haste central que atravessa a mesa e recebe o rearme.
-            translate([-stem_width / 2, -stem_thickness / 2, -stem_length])
-                cube([stem_width, stem_thickness, stem_length + 12]);
+            // Cabeça, mais espessa que a haste.
+            linear_extrude(height = target_head_thickness)
+                square([target_width, target_head_height]);
 
-            // Ressalto traseiro para o futuro mecanismo de retenção.
-            translate([-stem_width / 2, stem_thickness / 2, -20])
-                cube([stem_width, 2, 5]);
-
-            // Sapata onde o braço do servo empurra o alvo para cima.
-            translate([
-                -target_foot_width / 2,
-                -target_foot_depth / 2,
-                -stem_length
-            ])
-                cube([
-                    target_foot_width,
-                    target_foot_depth,
-                    target_foot_height
-                ]);
+            target_knot_block();
+            target_pin();
         }
 
-        // Ponto para elástico ou mola leve de retorno/retensão.
-        translate([0, 0, -stem_length + 16])
-            rotate([90, 0, 0])
+        // Furo do fio que liga o alvo ao braço do servo.
+        translate([
+            target_knot_x[0] - epsilon,
+            target_knot_hole_center[0],
+            target_knot_hole_center[1]
+        ])
+            rotate([0, 90, 0])
                 cylinder(
-                    d = target_elastic_hole_diameter,
-                    h = stem_thickness + 2,
-                    center = true
+                    d = target_knot_hole_diameter,
+                    h = target_knot_x[1] - target_knot_x[0] + 2 * epsilon
                 );
+
+        // Saída de molde da face frontal: recua target_head_draft ao longo
+        // da espessura da cabeça.
+        translate([0, target_head_height, 0])
+            rotate([atan(target_head_draft / target_head_thickness), 0, 0])
+                translate([-10, 0, -20])
+                    cube([target_width + 20, 20, 60]);
     }
 }
 
-target();
+scale(target_scale) target();

@@ -1,29 +1,85 @@
 include <parameters.scad>
 
-// Braço plano do servo. A origem coincide com o eixo do servo e o braço
-// cresce no sentido negativo de X. Na montagem, ele gira no plano XZ.
-module servo_stick(
-    length = servo_stick_length,
-    width = servo_stick_width,
-    tip_width = servo_stick_tip_width,
-    thickness = servo_stick_thickness,
-    spline_hole = servo_spline_hole_diameter
-) {
-    difference() {
-        hull() {
-            cylinder(d = width + 4, h = thickness);
+// Braço do servo convertido de references/servo_stick.stl.
+//
+// A peça é prismática em Z: uma chapa de 2 mm com um ressalto de mais 2 mm
+// acompanhando a borda. Orientação e coordenadas iguais às do STL; o eixo do
+// servo fica em servo_stick_hub, ou seja X = 75, Y = 0.
 
-            translate([-length, 0, 0])
-                cylinder(d = tip_width, h = thickness);
+// Contorno externo do braço.
+servo_stick_outline = [
+    [81.01, 0.00], [79.50, -16.54], [79.48, -16.87], [79.44, -17.20],
+    [79.38, -17.53], [79.29, -17.85], [79.18, -18.16], [79.05, -18.46],
+    [78.89, -18.75], [78.72, -19.04], [78.52, -19.30], [78.31, -19.55],
+    [78.07, -19.79], [77.82, -20.01], [77.56, -20.20], [77.28, -20.38],
+    [76.98, -20.54], [76.68, -20.67], [76.37, -20.79], [69.54, -6.02],
+    [68.99, 0.04], [70.50, 16.62], [70.50, 16.67], [70.50, 16.72],
+    [70.51, 16.77], [72.50, 24.24], [72.50, 36.02], [74.50, 44.00],
+    [77.50, 44.00], [77.50, 24.24], [79.49, 16.77], [79.49, 16.76],
+    [79.49, 16.74], [79.49, 16.73]
+];
+
+// Áreas rebaixadas: o ressalto é o contorno menos estas duas regiões.
+servo_stick_recess_hub = [
+    [72.04, -11.42], [75.52, -18.95], [75.76, -18.88], [75.99, -18.80],
+    [76.21, -18.69], [76.42, -18.56], [76.61, -18.41], [76.79, -18.24],
+    [76.96, -18.06], [77.10, -17.86], [77.22, -17.64], [77.33, -17.42],
+    [77.40, -17.18], [77.46, -16.95], [77.49, -16.70], [77.50, -16.45],
+    [79.00, 0.00], [77.50, 16.59], [77.48, 16.84], [77.43, 17.09],
+    [77.36, 17.33], [77.27, 17.56], [77.15, 17.78], [77.01, 17.99],
+    [76.85, 18.18], [76.67, 18.36], [76.48, 18.52], [76.27, 18.65],
+    [76.05, 18.77], [75.82, 18.86], [75.58, 18.93], [75.33, 18.98],
+    [75.08, 19.00], [74.83, 18.99], [74.59, 18.96], [74.34, 18.91],
+    [74.10, 18.83], [73.88, 18.73], [73.66, 18.61], [73.45, 18.46],
+    [73.27, 18.30], [73.09, 18.12], [72.94, 17.92], [72.81, 17.71],
+    [72.70, 17.48], [72.61, 17.25], [72.55, 17.01], [72.51, 16.76],
+    [72.50, 16.51], [71.00, 0.04]
+];
+
+servo_stick_recess_arm = [
+    [77.50, 44.00], [74.50, 44.00], [72.50, 36.02], [72.50, 24.24],
+    [70.68, 17.77], [70.79, 18.10], [70.92, 18.41], [70.96, 18.49],
+    [70.97, 18.50], [71.08, 18.71], [71.26, 19.00], [71.46, 19.28],
+    [71.68, 19.54], [71.92, 19.78], [72.17, 20.00], [72.44, 20.20],
+    [72.73, 20.39], [73.03, 20.55], [73.34, 20.68], [73.66, 20.80],
+    [73.99, 20.89], [74.32, 20.95], [74.66, 20.99], [75.00, 21.00],
+    [75.34, 20.99], [75.68, 20.95], [76.01, 20.89], [76.34, 20.80],
+    [76.66, 20.68], [76.97, 20.55], [77.27, 20.39], [77.56, 20.20],
+    [77.83, 20.00], [78.08, 19.78], [78.32, 19.54], [78.54, 19.28],
+    [78.74, 19.00], [78.92, 18.71], [79.03, 18.50], [79.03, 18.50],
+    [79.04, 18.49], [79.08, 18.41], [79.21, 18.10], [79.32, 17.77],
+    [77.50, 24.24]
+];
+
+module servo_stick() {
+    difference() {
+        union() {
+            // Chapa inferior, de Z = -2 a 0.
+            translate([0, 0, -servo_stick_lower_thickness])
+                linear_extrude(height = servo_stick_lower_thickness)
+                    polygon(servo_stick_outline);
+
+            // Ressalto de borda, de Z = 0 a 2.
+            linear_extrude(height = servo_stick_upper_thickness)
+                difference() {
+                    polygon(servo_stick_outline);
+                    polygon(servo_stick_recess_hub);
+                    polygon(servo_stick_recess_arm);
+                }
         }
 
-        translate([0, 0, -epsilon])
-            cylinder(d = spline_hole, h = thickness + 2 * epsilon);
-
-        // Furo opcional para rolete ou pino de contato.
-        translate([-length, 0, -epsilon])
-            cylinder(d = 4.2, h = thickness + 2 * epsilon);
+        // Furo do eixo do servo.
+        translate([
+            servo_stick_hub[0],
+            servo_stick_hub[1],
+            -servo_stick_lower_thickness - epsilon
+        ])
+            cylinder(
+                d = servo_stick_shaft_diameter,
+                h = servo_stick_lower_thickness
+                    + servo_stick_upper_thickness + 2 * epsilon
+            );
     }
 }
 
-servo_stick();
+scale(servo_stick_scale) servo_stick();
