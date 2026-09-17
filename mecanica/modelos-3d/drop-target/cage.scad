@@ -1,172 +1,115 @@
 include <parameters.scad>
 
-// Guia fixa sob o playfield. A superfície superior da mesa está em Z = 0.
-module cage(
-    face_width = bank_width,
-    face_thickness = target_thickness,
-    clearance = print_clearance,
-    wall = guide_wall,
-    height = guide_height
-) {
-    outer_width = face_width + 2 * (clearance + wall);
-    slot_inner_depth = max(face_thickness, target_stem_thickness)
-        + 2 * clearance;
-    channel_inner_depth = max([
-        face_thickness,
-        target_stem_thickness,
-        target_foot_depth
-    ]) + 2 * clearance;
-    outer_depth = channel_inner_depth + 2 * wall;
-    guide_pad_depth = (channel_inner_depth
-        - face_thickness - 2 * clearance) / 2;
-    flange_top_z = -playfield_thickness;
-    flange_bottom_z = flange_top_z - cage_flange_thickness;
-    guide_bottom_z = flange_bottom_z - height;
+// Gaiola convertida de references/cage.stl.
+//
+// A peça é totalmente prismática no eixo X: tudo são perfis no plano YZ
+// extrudados ao longo da largura. Cada perfil abaixo é o contorno medido
+// na malha original, então os pontos podem ser editados diretamente.
+//
+// Orientação idêntica à do STL (deitada, como é impressa):
+//   X = largura (40 mm)   Y = altura da estrutura (85 mm)   Z = profundidade
 
+// Extruda um perfil (Y, Z) ao longo de X, de x_start por thickness.
+module cage_prism(points, x_start, thickness) {
+    translate([x_start, 0, 0])
+        rotate([90, 0, 90])
+            linear_extrude(height = thickness)
+                polygon(points);
+}
+
+// Furo redondo atravessando a lateral, posicionado em (Y, Z).
+module cage_hole(center, diameter, x_start, thickness) {
+    translate([x_start - epsilon, center[0], center[1]])
+        rotate([0, 90, 0])
+            cylinder(d = diameter, h = thickness + 2 * epsilon);
+}
+
+// Contorno externo da lateral esquerda: a que leva a janela grande.
+cage_left_profile = [
+    [-86, -6], [-1, -6], [-1, 8], [-11, 8], [-11, 0],
+    [-40, 0], [-40, 19.8], [-48.38, 40], [-48.38, 41.5], [-86, 41.5]
+];
+
+// Contorno externo da lateral direita, com o recorte que apoia o servo.
+cage_right_profile = [
+    [-86, -6], [-86, 41.5], [-77, 41.5], [-77, 24.5], [-73, 24.5],
+    [-60, 11.5], [-46, 11.5], [-40, 17.5], [-40, 26], [-29, 26],
+    [-29, 0], [-11, 0], [-11, 8], [-1, 8], [-1, -6]
+];
+
+// Fenda comprida logo acima da base, presente nas duas laterais.
+module cage_side_slot_cut(x_start) {
+    translate([
+        x_start - epsilon,
+        cage_side_slot[0][0],
+        cage_side_slot[0][1]
+    ])
+        cube([
+            cage_wall + 2 * epsilon,
+            cage_side_slot[1][0] - cage_side_slot[0][0],
+            cage_side_slot[1][1] - cage_side_slot[0][1]
+        ]);
+}
+
+module cage_left_wall() {
     difference() {
-        union() {
-            // Flange de fixação contra a parte inferior da mesa.
-            translate([
-                -cage_flange_width / 2,
-                -cage_flange_depth / 2,
-                flange_bottom_z
-            ])
-                cube([
-                    cage_flange_width,
-                    cage_flange_depth,
-                    cage_flange_thickness
-                ]);
+        cage_prism(cage_left_profile, cage_left_x, cage_wall);
 
-            // Trilhos laterais.
-            for (x = [
-                -face_width / 2 - clearance - wall,
-                face_width / 2 + clearance
-            ])
-                translate([x, -outer_depth / 2, guide_bottom_z])
-                    cube([wall, outer_depth, height]);
-
-            // Quadros frontal e traseiro evitam movimento no eixo Y.
-            for (y = [
-                -channel_inner_depth / 2 - wall,
-                channel_inner_depth / 2
-            ])
-                difference() {
-                    translate([-outer_width / 2, y, guide_bottom_z])
-                        cube([outer_width, wall, height]);
-
-                    translate([
-                        -face_width / 2 + guide_frame_width,
-                        y - epsilon,
-                        guide_bottom_z + guide_frame_width
-                    ])
-                        cube([
-                            face_width - 2 * guide_frame_width,
-                            wall + 2 * epsilon,
-                            height - 2 * guide_frame_width
-                        ]);
-                }
-
-            // Ressaltos próximos às bordas guiam a face sem bloquear a
-            // sapata central, que é mais profunda.
-            for (x = [
-                -face_width / 2 + guide_frame_width / 2,
-                face_width / 2 - guide_frame_width / 2
-            ]) {
-                translate([
-                    x - guide_frame_width / 2,
-                    -channel_inner_depth / 2,
-                    guide_bottom_z
-                ])
-                    cube([guide_frame_width, guide_pad_depth, height]);
-
-                translate([
-                    x - guide_frame_width / 2,
-                    face_thickness / 2 + clearance,
-                    guide_bottom_z
-                ])
-                    cube([guide_frame_width, guide_pad_depth, height]);
-            }
-
-            // Nervuras entre os canais mantêm os três alvos alinhados,
-            // sem interferir com as sapatas de rearme.
-            for (index = [0 : targets_per_bank - 2]) {
-                divider_x = (index - (targets_per_bank - 2) / 2)
-                    * target_pitch;
-
-                translate([
-                    divider_x - target_gap / 4,
-                    -channel_inner_depth / 2,
-                    guide_bottom_z
-                ])
-                    cube([target_gap / 2, guide_pad_depth, height]);
-
-                translate([
-                    divider_x - target_gap / 4,
-                    face_thickness / 2 + clearance,
-                    guide_bottom_z
-                ])
-                    cube([target_gap / 2, guide_pad_depth, height]);
-            }
-
-            // Travessa inferior removendo carga dos quadros.
-            translate([
-                -outer_width / 2,
-                -outer_depth / 2,
-                guide_bottom_z
-            ])
-                cube([outer_width, outer_depth, wall]);
-        }
-
-        // Uma passagem independente para cada alvo.
-        for (index = [0 : targets_per_bank - 1])
-            translate([
-                (index - (targets_per_bank - 1) / 2) * target_pitch
-                    - target_width / 2 - clearance,
-                -slot_inner_depth / 2,
-                flange_bottom_z - epsilon
-            ])
-                cube([
-                    target_width + 2 * clearance,
-                    slot_inner_depth,
-                    cage_flange_thickness + 2 * epsilon
-                ]);
-
-        // Passagem da sapata pela travessa inferior.
-        for (index = [0 : targets_per_bank - 1])
-            translate([
-                (index - (targets_per_bank - 1) / 2) * target_pitch
-                    - target_foot_width / 2 - clearance,
-                -target_foot_depth / 2 - clearance,
-                guide_bottom_z - epsilon
-            ])
-                cube([
-                    target_foot_width + 2 * clearance,
-                    target_foot_depth + 2 * clearance,
-                    wall + 2 * epsilon
-                ]);
-
-        // União horizontal entre a gaiola e as colunas da base.
-        for (x = [
-            -outer_width / 2 + wall / 2,
-            outer_width / 2 - wall / 2
+        // Janela lateral.
+        translate([
+            cage_left_x - epsilon,
+            cage_window[0][0],
+            cage_window[0][1]
         ])
-            translate([x, 0, guide_bottom_z + wall + 1])
-                rotate([90, 0, 0])
-                    cylinder(
-                        d = base_join_hole_diameter,
-                        h = outer_depth + 2 * base_post_size,
-                        center = true
-                    );
+            cube([
+                cage_wall + 2 * epsilon,
+                cage_window[1][0] - cage_window[0][0],
+                cage_window[1][1] - cage_window[0][1]
+            ]);
 
-        // Quatro parafusos da flange no playfield.
-        for (x = [-face_width / 2 - 10, face_width / 2 + 10])
-            for (y = [-cage_flange_depth / 2 + 8, cage_flange_depth / 2 - 8])
-                translate([x, y, flange_bottom_z - epsilon])
-                    cylinder(
-                        d = mount_hole_diameter,
-                        h = cage_flange_thickness + 2 * epsilon
-                    );
+        cage_hole([-76, 13], cage_screw_diameter, cage_left_x, cage_wall);
+        cage_hole([-79, 31], cage_pin_diameter, cage_left_x, cage_wall);
+        cage_hole([-51, 31], cage_pin_diameter, cage_left_x, cage_wall);
+        cage_side_slot_cut(cage_left_x);
     }
 }
 
-cage();
+module cage_right_wall() {
+    difference() {
+        cage_prism(cage_right_profile, cage_right_x, cage_wall);
+
+        cage_hole([-76, 13], cage_screw_diameter, cage_right_x, cage_wall);
+        cage_hole([-79, 31], cage_pin_diameter, cage_right_x, cage_wall);
+        // Furos do microswitch.
+        cage_hole([-32, 22], cage_pin_diameter, cage_right_x, cage_wall);
+        cage_hole([-32, 12], cage_pin_diameter, cage_right_x, cage_wall);
+        cage_side_slot_cut(cage_right_x);
+    }
+}
+
+// Base e travessa frontal cruzam a largura inteira e unem as duas laterais.
+module cage_cross_members() {
+    full_width = cage_right_x + cage_wall - cage_left_x;
+
+    cage_prism([
+        [cage_base_span[0], cage_base_depth[0]],
+        [cage_base_span[1], cage_base_depth[0]],
+        [cage_base_span[1], cage_base_depth[1]],
+        [cage_base_span[0], cage_base_depth[1]]
+    ], cage_left_x, full_width);
+
+    cage_prism([
+        [cage_bar_span[0], cage_bar_depth[0]],
+        [cage_bar_span[1], cage_bar_depth[0]],
+        [cage_bar_span[1], cage_bar_depth[1]],
+        [cage_bar_span[0], cage_bar_depth[1]]
+    ], cage_left_x, full_width);
+}
+
+module cage() {
+    cage_left_wall();
+    cage_right_wall();
+    cage_cross_members();
+}
+
+scale(cage_scale) cage();
