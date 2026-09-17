@@ -16,25 +16,27 @@ ajustadas antes de imprimir.
 90 mm: pá com canal para borracha, eixo sextavado de 8 mm, base com mancal e batentes, alavanca
 inferior, guia frontal, haste de acionamento e botão.
 
+É o único arquivo do flipper: a versão anterior, só do lado esquerdo, foi removida.
+
 O mesmo arquivo atende os dois lados da mesa. Em `lado_flipper`, `"esquerdo"` ou `"direito"` já
-ajusta junto a distância lateral, o curso da haste e a posição da guia, que mudam entre os lados:
+ajusta junto as três medidas que mudam com a assimetria do gabinete:
 
 | | esquerdo | direito |
 |---|---:|---:|
 | Distância lateral | 95,0 mm | 127,0 mm |
 | Curso da haste | 110,0 mm | 142,0 mm |
+| Posição da guia em X | −55,0 mm | −87,0 mm |
 
-O arquivo abre na montagem. Para inspecionar ou exportar uma peça, altere `modo_visualizacao` para
-`"base"`, `"alavanca"`, `"haste"`, `"guia_frontal"` ou `"botao"`. O modo `"mesa_impressao"` põe todas
-as peças deitadas, na posição de impressão.
+O arquivo abre na montagem, que roda em **View > Animate**. Para inspecionar ou exportar uma peça,
+altere `modo_visualizacao` para `"flipper"`, `"eixo"`, `"base"`, `"alavanca"`, `"haste"`,
+`"guia_frontal"` ou `"botao"` — as sete peças do mecanismo, cada uma isolada. O modo
+`"mesa_impressao"` deita cinco delas na posição de impressão, para fatiar de uma vez; a pá e o eixo
+ficam de fora porque pedem orientação própria.
 
 Os STL já exportados estão separados por lado em
 [`flipper/export/lado_esquerdo`](flipper/export/lado_esquerdo/) e
-[`flipper/export/lado_direito`](flipper/export/lado_direito/): `alavanca`, `base`, `botao`, `eixo`,
-`flipper`, `guia_frontal` e `haste` em cada um.
-
-A versão anterior continua em [`flipper/flipper-v4-esquerdo.scad`](flipper/flipper-v4-esquerdo.scad),
-só do lado esquerdo.
+[`flipper/export/lado_direito`](flipper/export/lado_direito/), com as sete peças em cada: `alavanca`,
+`base`, `botao`, `eixo`, `flipper`, `guia_frontal` e `haste`.
 
 ## Drop target
 
