@@ -6,22 +6,35 @@ ajustadas antes de imprimir.
 
 | Mecanismo | Pasta | Situação |
 |---|---|---|
-| Flipper | [`flipper`](flipper/) | modelado e exportado, sem protótipo montado |
+| Flipper | [`flipper`](flipper/) | versão 5, com os dois lados exportados |
 | Drop target | [`drop-target`](drop-target/README.md) | peças convertidas dos STL de referência, com simulação do ciclo |
 | Plunger handle | [`pinball-plunger`](pinball-plunger/README.md) | impresso e em ajuste de encaixe |
 
 ## Flipper
 
-[`flipper/flipper-v4-esquerdo.scad`](flipper/flipper-v4-esquerdo.scad) reúne o mecanismo completo do
-flipper esquerdo de 90 mm: pá com canal para borracha, eixo sextavado de 8 mm, base com mancal e
-batentes, alavanca inferior, guia frontal, haste de acionamento e botão.
+[`flipper/flipper-v5.scad`](flipper/flipper-v5.scad) é a versão atual e reúne o mecanismo completo de
+90 mm: pá com canal para borracha, eixo sextavado de 8 mm, base com mancal e batentes, alavanca
+inferior, guia frontal, haste de acionamento e botão.
+
+O mesmo arquivo atende os dois lados da mesa. Em `lado_flipper`, `"esquerdo"` ou `"direito"` já
+ajusta junto a distância lateral, o curso da haste e a posição da guia, que mudam entre os lados:
+
+| | esquerdo | direito |
+|---|---:|---:|
+| Distância lateral | 95,0 mm | 127,0 mm |
+| Curso da haste | 110,0 mm | 142,0 mm |
 
 O arquivo abre na montagem. Para inspecionar ou exportar uma peça, altere `modo_visualizacao` para
 `"base"`, `"alavanca"`, `"haste"`, `"guia_frontal"` ou `"botao"`. O modo `"mesa_impressao"` põe todas
 as peças deitadas, na posição de impressão.
 
-Os STL já exportados estão em [`flipper/export`](flipper/export/): `alavanca`, `base`, `botao`,
-`eixo`, `flipper`, `guia_frontal` e `haste`.
+Os STL já exportados estão separados por lado em
+[`flipper/export/lado_esquerdo`](flipper/export/lado_esquerdo/) e
+[`flipper/export/lado_direito`](flipper/export/lado_direito/): `alavanca`, `base`, `botao`, `eixo`,
+`flipper`, `guia_frontal` e `haste` em cada um.
+
+A versão anterior continua em [`flipper/flipper-v4-esquerdo.scad`](flipper/flipper-v4-esquerdo.scad),
+só do lado esquerdo.
 
 ## Drop target
 
