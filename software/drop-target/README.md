@@ -8,15 +8,41 @@ Código de acionamento do drop target na Raspberry Pi 4.
 
 ## Ligação
 
+Com a Pi **desligada**. Pino 1 fica no canto mais perto do slot do micro-SD; ímpares numa fileira,
+pares na outra.
+
 | Fio do SG90 | Vai para | Pino físico |
 |---|---|---|
-| Laranja / amarelo (sinal) | GPIO18 | 12 |
-| Marrom / preto (GND) | GND | 6 |
-| Vermelho (+5 V) | 5 V — **ver abaixo** | 2 ou 4 |
+| Laranja / amarelo (sinal) | GPIO18 | **12** |
+| Marrom / preto (GND) | GND | **14** |
+| Vermelho (+5 V) | 5 V — **ver abaixo** | **2** |
+
+```
+ ímpar                      par
+ ─────────────────          ─────────────────
+  1  3V3                     2  5V       <-- VERMELHO
+  3  GPIO2  (SDA, I2C)       4  5V
+  5  GPIO3  (SCL, I2C)       6  GND
+  7  GPIO4  (sensor)         8  GPIO14
+  9  GND                    10  GPIO15
+ 11  GPIO17 (sensor)        12  GPIO18   <-- LARANJA (sinal)
+ 13  GPIO27 (sensor)        14  GND      <-- MARROM
+```
+
+O terra vai no 14, e não no 6, de propósito: achado o 12, o 14 é o buraco vizinho na mesma fileira.
+O 6 funciona igual, mas obriga a contar de novo e é onde se erra.
 
 GPIO18 foi escolhido por dois motivos: é PWM por hardware na Pi 4, e já aparece no esquemático do
 projeto sem função atribuída — não está no banco de 16 entradas de sensores
 ([`docs/05-pinout.md`](../../docs/05-pinout.md), seção 5.1).
+
+**Confira a ordem dos fios antes de energizar.** No SG90 original é marrom / vermelho / laranja, com
+o vermelho no meio. Em clone pode vir preto / vermelho / amarelo. Se o vermelho não estiver no meio,
+pare: 5 V no pino de sinal queima o servo. E o vermelho vai no pino 2, não no 1 — o pino 1 é 3,3 V, e
+aí o servo gira torto e você culpa o código.
+
+**Não encoste nos pinos 3 e 5** (I²C dos PCF8574, por onde os solenoides são comandados) nem nos
+**7, 11 e 13** (banco de entradas de sensores). Nenhum deles é deste mecanismo.
 
 ### Alimentação
 
@@ -28,14 +54,22 @@ Para um teste de bancada com um servo só, o pino 5 V da própria Pi costuma agu
 
 ## Instalação
 
+O `gpiozero` já vem no Raspberry Pi OS. Se faltar:
+
 ```bash
-sudo apt install pigpio python3-pigpio python3-gpiozero
-sudo systemctl enable --now pigpiod
+sudo apt install -y python3-gpiozero python3-lgpio
 ```
 
-O `pigpio` não é obrigatório: sem ele o script roda no PWM por software da própria biblioteca e
-avisa. Mas o PWM por software é gerado pelo sistema operacional e treme quando a Pi está ocupada —
-no servo isso vira zumbido e tremor. O `pigpio` gera o pulso por DMA e sai estável.
+**Não é preciso instalar `pigpio` para rodar.** O script usa o backend que existir e informa qual
+ficou em uso na primeira linha da saída.
+
+| Backend | Quando usar |
+|---|---|
+| `pigpio` | O melhor: pulso gerado por DMA, imune à carga da Pi. Mas o pacote não existe em toda versão do Raspberry Pi OS e **não suporta a Pi 5**. Se existir: `sudo apt install -y pigpio python3-pigpio` e `sudo systemctl enable --now pigpiod` |
+| `lgpio` | Padrão do Raspberry Pi OS atual. Pulso gerado em espaço de usuário, treme um pouco com a Pi carregada. Serve bem aqui, porque o braço só se move de vez em quando |
+
+Se `apt` responder `pigpio has no installation candidate`, ignore e siga: é só o pacote não existir
+na sua versão. O script roda igual.
 
 ## Uso
 

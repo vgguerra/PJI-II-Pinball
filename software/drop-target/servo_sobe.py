@@ -27,15 +27,22 @@ ALIMENTAÇÃO — leia antes de ligar
     entende o sinal. Para um teste rápido de um servo só, na bancada, o pino 5 V
     da própria Pi costuma aguentar.
 
-PWM — por que pigpio
-    O PWM por software da RPi.GPIO é gerado pelo sistema operacional e treme
-    quando a Pi está ocupada. Num servo isso vira zumbido, tremor e consumo à
-    toa. O pigpio gera o pulso por DMA, então ele sai estável mesmo com a Pi
-    carregada. O script usa pigpio quando o daemon está no ar e avisa quando
-    cai no PWM por software.
+PWM — qualidade do pulso
+    O servo lê a largura do pulso, então tremor no pulso vira tremor no braço.
+    O script funciona com qualquer backend do gpiozero e diz na saída qual
+    está em uso, em ordem de preferência:
 
-        sudo apt install pigpio python3-pigpio python3-gpiozero
-        sudo systemctl enable --now pigpiod
+      pigpio   pulso gerado por DMA, imune à carga da Pi. É o melhor, mas o
+               pacote nem sempre existe no repositório da sua versão do
+               Raspberry Pi OS, e ele não suporta a Pi 5. Se estiver
+               disponível: sudo apt install pigpio python3-pigpio
+               e depois sudo systemctl enable --now pigpiod
+      lgpio    padrão do Raspberry Pi OS atual. Pulso gerado em espaço de
+               usuário: treme um pouco com a Pi carregada, mas serve bem para
+               este mecanismo, que só move o braço de vez em quando.
+
+    Se o braço ficar zumbindo parado, o problema some sozinho: o script solta
+    o servo no fim, o que corta o trem de pulsos.
 """
 
 from __future__ import annotations
@@ -71,19 +78,29 @@ TEMPO_DE_GIRO = 0.6     # o SG90 faz ~60 graus em 0,1 s sem carga; sobra folga
 
 
 def abre_servo() -> AngularServo:
-    """Monta o servo, preferindo o pigpio e avisando se cair no PWM software."""
+    """Monta o servo no melhor backend disponível e diz qual ficou em uso."""
     fabrica = None
     try:
         from gpiozero.pins.pigpio import PiGPIOFactory
 
         fabrica = PiGPIOFactory()
-    except Exception as erro:
-        print(
-            f"aviso: pigpio indisponivel ({erro.__class__.__name__}), "
-            "usando PWM por software — o servo pode tremer e zumbir.\n"
-            "       sudo systemctl enable --now pigpiod",
-            file=sys.stderr,
-        )
+        print("PWM: pigpio (pulso por DMA, firme)")
+    except Exception:
+        # Sem pigpio o gpiozero escolhe sozinho — hoje o padrão é o lgpio.
+        # Não é motivo de alarme: serve bem para mover o braço de vez em
+        # quando. Só não é o ideal se você for deixar o servo segurando carga.
+        #
+        # Descobrir o nome do backend é só informação. Se isso falhar, não é
+        # motivo para derrubar o programa: quem de fato abre o pino é o
+        # AngularServo logo abaixo, e o erro dele é que interessa.
+        try:
+            from gpiozero import Device
+
+            Device.ensure_pin_factory()
+            nome = Device.pin_factory.__class__.__name__
+        except Exception:
+            nome = "padrao"
+        print(f"PWM: {nome} (padrao do gpiozero; pode tremer sob carga da Pi)")
 
     return AngularServo(
         PINO_SERVO,
