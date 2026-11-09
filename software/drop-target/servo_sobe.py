@@ -32,14 +32,17 @@ PWM — qualidade do pulso
     O script funciona com qualquer backend do gpiozero e diz na saída qual
     está em uso, em ordem de preferência:
 
-      pigpio   pulso gerado por DMA, imune à carga da Pi. É o melhor, mas o
-               pacote nem sempre existe no repositório da sua versão do
-               Raspberry Pi OS, e ele não suporta a Pi 5. Se estiver
-               disponível: sudo apt install pigpio python3-pigpio
-               e depois sudo systemctl enable --now pigpiod
-      lgpio    padrão do Raspberry Pi OS atual. Pulso gerado em espaço de
-               usuário: treme um pouco com a Pi carregada, mas serve bem para
-               este mecanismo, que só move o braço de vez em quando.
+      lgpio    padrão do Raspberry Pi OS atual, e o que você vai usar. Pulso
+               gerado em espaço de usuário: treme um pouco com a Pi
+               carregada, mas serve bem para este mecanismo, que só move o
+               braço de vez em quando.
+      pigpio   gerava o pulso por DMA e era melhor, mas NÃO TENTE INSTALAR:
+               o pacote saiu do Raspberry Pi OS a partir do Trixie, porque o
+               projeto foi abandonado e não funciona na Pi 5. O código ainda
+               tenta usá-lo para o caso de uma Pi antiga, e desiste sozinho.
+
+    Se o tremor atrapalhar, o caminho é o PWM de hardware do SoC, via
+    dtoverlay no config.txt — ver o README desta pasta.
 
     Se o braço ficar zumbindo parado, o problema some sozinho: o script solta
     o servo no fim, o que corta o trem de pulsos.

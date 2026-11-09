@@ -60,16 +60,29 @@ O `gpiozero` já vem no Raspberry Pi OS. Se faltar:
 sudo apt install -y python3-gpiozero python3-lgpio
 ```
 
-**Não é preciso instalar `pigpio` para rodar.** O script usa o backend que existir e informa qual
-ficou em uso na primeira linha da saída.
+### Não tente instalar o `pigpio`
 
-| Backend | Quando usar |
-|---|---|
-| `pigpio` | O melhor: pulso gerado por DMA, imune à carga da Pi. Mas o pacote não existe em toda versão do Raspberry Pi OS e **não suporta a Pi 5**. Se existir: `sudo apt install -y pigpio python3-pigpio` e `sudo systemctl enable --now pigpiod` |
-| `lgpio` | Padrão do Raspberry Pi OS atual. Pulso gerado em espaço de usuário, treme um pouco com a Pi carregada. Serve bem aqui, porque o braço só se move de vez em quando |
+Se `apt` responder `Package 'pigpio' has no installation candidate`, **não é erro seu e não tem
+conserto por `apt`**. O pacote foi removido do Raspberry Pi OS a partir do Trixie: o Debian o tirou
+em 2025 porque o projeto foi abandonado pelo autor e não funciona na Pi 5. Compilar do fonte é
+possível, mas há relatos de *segfault* no Trixie.
 
-Se `apt` responder `pigpio has no installation candidate`, ignore e siga: é só o pacote não existir
-na sua versão. O script roda igual.
+O script não precisa dele. Ele usa o backend que existir — hoje o `lgpio` — e informa qual ficou em
+uso na primeira linha da saída. O pulso do `lgpio` é gerado em espaço de usuário e treme um pouco
+quando a Pi está carregada, mas serve bem aqui: o braço só se move de vez em quando, e o script
+solta o servo no fim, o que corta o trem de pulsos.
+
+### Se o tremor incomodar
+
+O caminho atual **não** é o `pigpio`, é o PWM de hardware do próprio SoC, que o kernel expõe em
+`/sys/class/pwm`. Em `/boot/firmware/config.txt`:
+
+```
+dtoverlay=pwm,pin=18,func=2
+```
+
+Reinicie e o pulso passa a ser gerado pelo hardware, imune à carga da Pi. Só vale mexer nisso se a
+calibração mostrar que o braço não para quieto — para levantar um alvo, o `lgpio` dá conta.
 
 ## Uso
 
