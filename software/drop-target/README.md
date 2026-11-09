@@ -137,10 +137,19 @@ calibração mostrar que o braço não para quieto — para levantar um alvo, o 
 ## Uso
 
 ```bash
-sudo ./servo_sobe                            # repouso, pausa, levanta
+sudo ./servo_sobe                            # ciclo completo
 sudo ./servo_sobe --calibra                  # move a cada angulo digitado
 sudo ./servo_sobe --repouso 50 --levanta 95  # testa um par sem recompilar
+sudo ./servo_sobe --angulo 70                # vai a um angulo so, sem voltar
 ```
+
+O ciclo completo é **repouso → levanta → volta ao repouso**. A volta não é enfeite: com o braço
+levantado ele fica no caminho do alvo, e a bola não consegue derrubá-lo de novo. O ciclo só fecha
+quando o braço está de volta embaixo do alvo, pronto para a próxima.
+
+Entre levantar e recolher há uma pausa de 500 ms (`TEMPO_NO_TOPO_MS`), para o alvo assentar no
+engate da gaiola antes de perder o apoio do braço. **Se o alvo cair sozinho logo depois de
+levantar, é esse número que precisa aumentar** — não o ângulo.
 
 ## Calibrar os ângulos
 

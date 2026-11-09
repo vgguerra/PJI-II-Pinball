@@ -1,9 +1,12 @@
 /* Primeiro acionamento do servo do drop target, em C.
  *
- * Mesmo mecanismo do servo_sobe.py, por outro caminho: em vez de pedir o
- * pulso a uma biblioteca, este programa fala direto com o PWM de hardware do
- * SoC, pela interface que o kernel expõe em /sys/class/pwm. Não depende de
- * biblioteca nenhuma — só da libc.
+ * Faz o ciclo inteiro do braço: repouso, levanta o alvo, espera ele travar no
+ * engate da gaiola, e volta para o repouso. A volta é obrigatória — braço
+ * levantado fica no caminho e a bola não derruba o alvo de novo.
+ *
+ * Em vez de pedir o pulso a uma biblioteca, este programa fala direto com o
+ * PWM de hardware do SoC, pela interface que o kernel expõe em
+ * /sys/class/pwm. Não depende de biblioteca nenhuma — só da libc.
  *
  * Por que isso é melhor que o caminho do Python: lá o pulso é montado em
  * espaço de usuário pelo lgpio, então ele treme quando a Pi está ocupada.
@@ -84,6 +87,16 @@
 #define CURSO_ESPERADO 43.0
 
 #define TEMPO_DE_GIRO_MS 600
+
+/* Quanto o braço fica lá em cima antes de recolher.
+ *
+ * Recolher não é enfeite: com o braço levantado ele fica no caminho do alvo e
+ * a bola não consegue derrubá-lo de novo. O ciclo só fecha quando o braço
+ * volta para baixo do alvo, pronto para a próxima.
+ *
+ * A pausa existe para o alvo assentar no engate da gaiola antes de perder o
+ * apoio do braço. Se ele cair sozinho logo depois de levantar, aumente. */
+#define TEMPO_NO_TOPO_MS 500
 
 /* Os caminhos são montados por concatenação: chip -> pwm -> arquivo. Cada
  * buffer tem de ser comprovadamente maior que o anterior, senão o gcc avisa
@@ -333,6 +346,10 @@ int main(int argc, char **argv)
         if (!erro) {
             dorme_ms(1000);
             erro = vai_para(pwm, levanta, "levanta");
+        }
+        if (!erro) {
+            dorme_ms(TEMPO_NO_TOPO_MS);
+            erro = vai_para(pwm, repouso, "volta");
         }
     }
 
