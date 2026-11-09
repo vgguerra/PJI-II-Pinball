@@ -5,6 +5,45 @@ Código de acionamento do drop target na Raspberry Pi 4.
 | Arquivo | O que faz |
 |---|---|
 | [`servo_sobe.py`](servo_sobe.py) | Teste de bancada: leva o braço do servo para repouso e depois para a posição que levanta o alvo |
+| [`servo_sobe.c`](servo_sobe.c) | O mesmo, em C, pelo PWM de hardware do SoC |
+
+As duas versões fazem a mesma coisa e aceitam os mesmos argumentos. A diferença não é a
+linguagem — é **quem gera o pulso**:
+
+| | Quem conta o tempo | Precisa de | Tremor |
+|---|---|---|---|
+| `servo_sobe.py` | `lgpio`, em espaço de usuário | nada, já vem no sistema | treme um pouco com a Pi ocupada |
+| `servo_sobe.c` | o bloco PWM do SoC | um `dtoverlay` e `sudo` | nenhum |
+
+Comece pela versão em Python: ela roda sem preparar nada. A versão em C vale quando o tremor
+atrapalhar — e o ganho vem do PWM de hardware, não de ser C. Daria para escrever nos mesmos
+arquivos de `/sys/class/pwm` a partir do Python.
+
+### Compilar e rodar a versão em C
+
+Uma vez só, em `/boot/firmware/config.txt`:
+
+```
+dtoverlay=pwm,pin=18,func=2
+```
+
+`pin=18` é BCM 18, o mesmo furo físico 12 — **não mexa na ligação**. `func=2` é a função
+alternativa que liga o GPIO18 ao bloco PWM0. Reinicie depois de salvar.
+
+```bash
+make
+sudo ./servo_sobe
+sudo ./servo_sobe --angulo 90 --segura
+```
+
+Precisa de `sudo` porque `/sys/class/pwm` pertence ao root. Para dispensar, uma regra de udev:
+
+```bash
+sudo tee /etc/udev/rules.d/99-pwm.rules <<'EOF'
+SUBSYSTEM=="pwm", ACTION=="add", RUN+="/bin/chgrp -R gpio /sys%p", RUN+="/bin/chmod -R g=u /sys%p"
+EOF
+sudo udevadm control --reload
+```
 
 ## Ligação
 
