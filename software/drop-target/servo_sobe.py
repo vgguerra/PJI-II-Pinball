@@ -11,7 +11,7 @@ movimento e conferir se os ângulos batem com a mecânica.
     python3 servo_sobe.py --repouso 25 --levanta 100
 
 MONTAGEM
-    Sinal do servo (fio laranja ou amarelo)  ->  GPIO18, pino físico 12
+    Sinal do servo (fio laranja ou amarelo)  ->  BCM 18 = furo físico 12
     Terra  (fio marrom ou preto)             ->  qualquer GND, ex. pino 6
     +5 V   (fio vermelho)                    ->  ver o aviso de alimentação
 
@@ -53,7 +53,19 @@ import time
 
 from gpiozero import AngularServo
 
-PINO_SERVO = 12
+# NUMERAÇÃO — leia antes de mexer nestes dois números.
+#
+# O gpiozero fala BCM, que é a numeração do chip, NÃO o número do furo no
+# conector de 40 vias. Os dois existem e são diferentes:
+#
+#     BCM 18  ==  furo físico 12   <- é aqui que o fio laranja entra
+#     BCM 12  ==  furo físico 32   <- outro lugar da placa
+#
+# Trocar o 18 abaixo pelo 12 do furo é o erro clássico: o fio continua certo,
+# o programa passa a acionar outro pino, e o servo não mexe sem dar erro
+# nenhum. Se precisar mudar de pino, mude os DOIS números juntos.
+PINO_SERVO = 18          # BCM
+PINO_FISICO = 12         # furo no conector, só para a mensagem na tela
 
 # Curso tirado da simulação mecânica, em
 # mecanica/modelos-3d/drop-target/simulation/drop-target-simulation.scad:
@@ -138,7 +150,7 @@ def main() -> int:
             p.error(f"--{nome} fora da faixa do SG90: {valor} nao esta entre 0 e 180")
 
     servo = abre_servo()
-    print(f"servo no GPIO{PINO_SERVO}")
+    print(f"servo em BCM{PINO_SERVO} = furo fisico {PINO_FISICO}")
 
     try:
         if args.angulo is not None:
