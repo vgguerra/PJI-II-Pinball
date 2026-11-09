@@ -70,7 +70,7 @@
  * melhor remontar do que compensar no software. */
 /* MEDIDOS NA BANCADA, com a gaiola e o alvo montados. Não são estimativa:
  * saíram do --calibra, olhando o braço. */
-#define ANGULO_REPOUSO 53.0
+#define ANGULO_REPOUSO 51.0
 #define ANGULO_LEVANTA 102.0
 
 /* O curso que saiu é de 43 graus. A simulação mecânica previa 75
