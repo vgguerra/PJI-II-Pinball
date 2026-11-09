@@ -53,7 +53,7 @@ import time
 
 from gpiozero import AngularServo
 
-PINO_SERVO = 18
+PINO_SERVO = 12
 
 # Curso tirado da simulação mecânica, em
 # mecanica/modelos-3d/drop-target/simulation/drop-target-simulation.scad:
