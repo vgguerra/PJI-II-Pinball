@@ -65,9 +65,23 @@
  * estriado. Serve de conferência: se a diferença entre os seus dois valores
  * der muito longe de 75, provavelmente a corneta está no dente errado, e é
  * melhor remontar do que compensar no software. */
-#define CURSO_DA_SIMULACAO 75.0
-#define ANGULO_REPOUSO     30.0
-#define ANGULO_LEVANTA    105.0
+/* MEDIDOS NA BANCADA, com a gaiola e o alvo montados. Não são estimativa:
+ * saíram do --calibra, olhando o braço. */
+#define ANGULO_REPOUSO 54.0
+#define ANGULO_LEVANTA 97.0
+
+/* O curso que saiu é de 43 graus. A simulação mecânica previa 75
+ * (drop-target-simulation.scad: arm_rest_angle = -35, arm_lift_angle = -110).
+ *
+ * Quem manda é a peça real: o alvo levanta com 43. A diferença provavelmente
+ * está na referência — os ângulos da simulação são do braço no sistema dela,
+ * e o zero do servo depende de onde a corneta entrou no eixo. Mas 32 graus é
+ * muita diferença para só referência, e vale conferir a geometria do braço na
+ * simulação antes de repetir o conjunto três vezes.
+ *
+ * O valor abaixo é a conferência de sanidade: se alguém mexer nos dois
+ * ângulos e o curso fugir muito disto, é sinal de corneta em dente errado. */
+#define CURSO_ESPERADO 43.0
 
 #define TEMPO_DE_GIRO_MS 600
 
@@ -301,13 +315,13 @@ int main(int argc, char **argv)
     /* Conferência contra a mecânica. Não impede nada: só avisa, porque quem
      * sabe se a corneta está no dente certo é você, olhando o braço. */
     double curso = levanta - repouso;
-    printf("curso configurado: %.1f graus (a simulacao mecanica pede %.0f)\n",
-           curso, CURSO_DA_SIMULACAO);
-    if (fabs(fabs(curso) - CURSO_DA_SIMULACAO) > 15.0)
+    printf("curso configurado: %.1f graus (medido na bancada: %.0f)\n",
+           curso, CURSO_ESPERADO);
+    if (fabs(fabs(curso) - CURSO_ESPERADO) > 15.0)
         fprintf(stderr,
-            "aviso: esse curso esta longe dos %.0f graus da mecanica.\n"
+            "aviso: esse curso esta longe dos %.0f graus medidos na bancada.\n"
             "       se o alvo nao levanta direito, veja se a corneta nao\n"
-            "       entrou no dente errado do eixo.\n", CURSO_DA_SIMULACAO);
+            "       entrou no dente errado do eixo.\n", CURSO_ESPERADO);
 
     int erro = 0;
     if (modo_calibra) {

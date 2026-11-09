@@ -4,22 +4,34 @@ Código de acionamento do drop target na Raspberry Pi 4.
 
 | Arquivo | O que faz |
 |---|---|
-| [`servo_sobe.py`](servo_sobe.py) | Teste de bancada: leva o braço do servo para repouso e depois para a posição que levanta o alvo |
-| [`servo_sobe.c`](servo_sobe.c) | O mesmo, em C, pelo PWM de hardware do SoC |
+| [`servo_sobe.c`](servo_sobe.c) | Teste de bancada: leva o braço do servo para repouso e depois para a posição que levanta o alvo |
 
-As duas versões fazem a mesma coisa e aceitam os mesmos argumentos. A diferença não é a
-linguagem — é **quem gera o pulso**:
+Houve uma versão em Python, com `gpiozero`. Foi removida quando o acionamento passou para o PWM
+de hardware. O que decidiu não foi a linguagem: no Python o pulso era montado pelo `lgpio`, em
+espaço de usuário, e tremia quando a Pi estava ocupada. Aqui quem conta o tempo é o bloco PWM do
+SoC, então o pulso sai igual com a Pi parada ou carregada. Daria para escrever nos mesmos arquivos
+de `/sys/class/pwm` a partir do Python — o ganho veio do hardware, não de ser C.
 
-| | Quem conta o tempo | Precisa de | Tremor |
-|---|---|---|---|
-| `servo_sobe.py` | `lgpio`, em espaço de usuário | nada, já vem no sistema | treme um pouco com a Pi ocupada |
-| `servo_sobe.c` | o bloco PWM do SoC | um `dtoverlay` e `sudo` | nenhum |
+Custo da troca: um `dtoverlay`, um reboot e `sudo`.
 
-Comece pela versão em Python: ela roda sem preparar nada. A versão em C vale quando o tremor
-atrapalhar — e o ganho vem do PWM de hardware, não de ser C. Daria para escrever nos mesmos
-arquivos de `/sys/class/pwm` a partir do Python.
+## Ângulos
 
-### Compilar e rodar a versão em C
+Medidos na bancada, com a gaiola e o alvo montados:
+
+| | graus |
+|---|---:|
+| Repouso | **54** |
+| Levanta | **97** |
+| Curso | 43 |
+
+A simulação mecânica previa **75** graus de curso
+([`drop-target-simulation.scad`](../../mecanica/modelos-3d/drop-target/simulation/drop-target-simulation.scad):
+`arm_rest_angle = -35`, `arm_lift_angle = -110`). Quem manda é a peça real: o alvo levanta com 43.
+Parte da diferença é de referência — os ângulos da simulação são do braço no sistema dela, e o zero
+do servo depende de onde a corneta entrou no eixo. Mas 32 graus é muita diferença, e vale conferir a
+geometria do braço na simulação **antes de repetir o conjunto três vezes**.
+
+## Compilar e rodar
 
 Uma vez só, em `/boot/firmware/config.txt`:
 
@@ -95,9 +107,8 @@ Para um teste de bancada com um servo só, o pino 5 V da própria Pi costuma agu
 
 O `gpiozero` já vem no Raspberry Pi OS. Se faltar:
 
-```bash
-sudo apt install -y python3-gpiozero python3-lgpio
-```
+Nada além do compilador, que já vem no Raspberry Pi OS. O programa fala com o PWM de hardware
+escrevendo em `/sys/class/pwm`, então não depende de biblioteca nenhuma além da libc.
 
 ### Não tente instalar o `pigpio`
 
@@ -126,9 +137,9 @@ calibração mostrar que o braço não para quieto — para levantar um alvo, o 
 ## Uso
 
 ```bash
-python3 servo_sobe.py                        # repouso, pausa, levanta
-python3 servo_sobe.py --angulo 90 --segura   # trava num ângulo, para calibrar
-python3 servo_sobe.py --repouso 25 --levanta 100
+sudo ./servo_sobe                            # repouso, pausa, levanta
+sudo ./servo_sobe --calibra                  # move a cada angulo digitado
+sudo ./servo_sobe --repouso 50 --levanta 95  # testa um par sem recompilar
 ```
 
 ## Calibrar os ângulos
