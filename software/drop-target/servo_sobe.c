@@ -35,6 +35,7 @@
 
 #include <dirent.h>
 #include <errno.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -48,12 +49,25 @@
 #define PULSO_MAX_NS  2300000L     /* 2300 us  -> 180 graus  */
 #define PERIODO_NS   20000000L     /*   20 ms  ->  50 Hz     */
 
-/* Curso tirado da simulação mecânica (drop-target-simulation.scad):
- * arm_rest_angle = -35 e arm_lift_angle = -110, ou seja 75 graus. Onde esses
- * 75 caem na escala do servo depende de como a corneta entrou no eixo. */
+/* ÂNGULOS — é aqui que você mexe depois de calibrar.
+ *
+ * Os dois são independentes de propósito. Uma versão anterior calculava
+ * ANGULO_LEVANTA como ANGULO_REPOUSO + 75, o que parecia esperto e era um
+ * estorvo: amarrava os dois valores a um curso que talvez não seja o seu, e
+ * impedia o caso em que levantar significa DIMINUIR o ângulo, que acontece
+ * dependendo de para que lado a corneta ficou apontando.
+ *
+ * Para achar os seus números, rode com --calibra.
+ *
+ * O curso da simulação mecânica (drop-target-simulation.scad: arm_rest_angle
+ * = -35, arm_lift_angle = -110) é de 75 graus. Isso NÃO diz onde os dois
+ * caem na escala do servo, porque depende de como a corneta entrou no eixo
+ * estriado. Serve de conferência: se a diferença entre os seus dois valores
+ * der muito longe de 75, provavelmente a corneta está no dente errado, e é
+ * melhor remontar do que compensar no software. */
 #define CURSO_DA_SIMULACAO 75.0
 #define ANGULO_REPOUSO     30.0
-#define ANGULO_LEVANTA     (ANGULO_REPOUSO + CURSO_DA_SIMULACAO)
+#define ANGULO_LEVANTA    105.0
 
 #define TEMPO_DE_GIRO_MS 600
 
@@ -61,7 +75,14 @@
  * buffer tem de ser comprovadamente maior que o anterior, senão o gcc avisa
  * de truncamento — e com razão, porque ele não tem como saber que na prática
  * "/sys/class/pwm/pwmchip0" tem 24 caracteres. */
-#define TAM_CHIP  96
+/* Raiz do sysfs. É substituível na compilação só para dar para exercitar o
+ * programa inteiro contra uma árvore de arquivos falsa, sem placa:
+ *     gcc -DRAIZ_PWM='"/tmp/fake"' ... */
+#ifndef RAIZ_PWM
+#define RAIZ_PWM "/sys/class/pwm"
+#endif
+
+#define TAM_CHIP  256
 #define TAM_PWM  (TAM_CHIP + 32)
 #define TAM_PATH (TAM_PWM + 32)
 
@@ -93,7 +114,7 @@ static void dorme_ms(long ms)
  * procurar é mais confiável que cravar "pwmchip0". */
 static int acha_chip(char destino[TAM_CHIP])
 {
-    DIR *d = opendir("/sys/class/pwm");
+    DIR *d = opendir(RAIZ_PWM);
     if (!d)
         return -1;
 
@@ -109,7 +130,7 @@ static int acha_chip(char destino[TAM_CHIP])
 
     if (melhor < 0)
         return -1;
-    snprintf(destino, TAM_CHIP, "/sys/class/pwm/pwmchip%d", melhor);
+    snprintf(destino, TAM_CHIP, RAIZ_PWM "/pwmchip%d", melhor);
     return 0;
 }
 
@@ -157,10 +178,56 @@ static int vai_para(const char pwm[TAM_PWM], double angulo, const char *rotulo)
     return 0;
 }
 
+/* Modo calibração: move a cada número digitado, sem sair e sem recompilar.
+ * Mantém o pulso ligado entre um movimento e outro, senão o braço amolece e
+ * você não consegue ver onde ele de fato parou. */
+static int calibra(const char pwm[TAM_PWM], double repouso, double levanta)
+{
+    char linha[64];
+
+    printf("\nmodo calibracao\n"
+           "  digite um angulo de 0 a 180 e Enter\n"
+           "  r = ir para o repouso (%.1f)    l = ir para o levanta (%.1f)\n"
+           "  q = sair\n\n", repouso, levanta);
+
+    for (;;) {
+        printf("angulo> ");
+        fflush(stdout);
+
+        if (!fgets(linha, sizeof linha, stdin)) {
+            printf("\n");
+            return 0;
+        }
+
+        linha[strcspn(linha, "\r\n")] = '\0';
+
+        char *p = linha;
+        while (*p == ' ' || *p == '\t') p++;
+
+        if (*p == 'q' || *p == 'Q') return 0;
+        if (*p == 'r' || *p == 'R') { vai_para(pwm, repouso, "repouso"); continue; }
+        if (*p == 'l' || *p == 'L') { vai_para(pwm, levanta, "levanta"); continue; }
+        if (*p == '\n' || *p == '\0') continue;
+
+        char *fim;
+        double g = strtod(p, &fim);
+        if (fim == p) {
+            fprintf(stderr, "  nao entendi \"%s\"\n", p);
+            continue;
+        }
+        if (g < 0.0 || g > 180.0) {
+            fprintf(stderr, "  fora da faixa do SG90: %.1f nao esta entre 0 e 180\n", g);
+            continue;
+        }
+        vai_para(pwm, g, "angulo");
+    }
+}
+
 static void ajuda(const char *prog)
 {
     printf("uso: sudo %s [--angulo G] [--repouso G] [--levanta G] [--segura]\n"
-           "                      [--chip N] [--canal N]\n\n"
+           "                      [--calibra] [--chip N] [--canal N]\n\n"
+           "  --calibra    move a cada angulo digitado, para achar os seus dois\n"
            "  --angulo G   vai direto para este angulo, para calibrar\n"
            "  --repouso G  angulo de repouso            (padrao %.0f)\n"
            "  --levanta G  angulo que levanta o alvo    (padrao %.0f)\n"
@@ -173,7 +240,7 @@ static void ajuda(const char *prog)
 int main(int argc, char **argv)
 {
     double repouso = ANGULO_REPOUSO, levanta = ANGULO_LEVANTA, angulo = -1.0;
-    int segura = 0, canal = 0, chip_forcado = -1;
+    int segura = 0, canal = 0, chip_forcado = -1, modo_calibra = 0;
 
     for (int i = 1; i < argc; i++) {
         const char *a = argv[i];
@@ -181,6 +248,7 @@ int main(int argc, char **argv)
 
         if (!strcmp(a, "-h") || !strcmp(a, "--help")) { ajuda(argv[0]); return 0; }
         else if (!strcmp(a, "--segura"))  segura = 1;
+        else if (!strcmp(a, "--calibra")) modo_calibra = 1;
         else if (!strcmp(a, "--angulo")  && tem_valor) angulo  = atof(argv[++i]);
         else if (!strcmp(a, "--repouso") && tem_valor) repouso = atof(argv[++i]);
         else if (!strcmp(a, "--levanta") && tem_valor) levanta = atof(argv[++i]);
@@ -199,10 +267,10 @@ int main(int argc, char **argv)
     char chip[TAM_CHIP], pwm[TAM_PWM], caminho[TAM_PATH];
 
     if (chip_forcado >= 0)
-        snprintf(chip, sizeof chip, "/sys/class/pwm/pwmchip%d", chip_forcado);
+        snprintf(chip, sizeof chip, RAIZ_PWM "/pwmchip%d", chip_forcado);
     else if (acha_chip(chip) != 0) {
         fprintf(stderr,
-            "nao achei nenhum pwmchip em /sys/class/pwm.\n"
+            "nao achei nenhum pwmchip em " RAIZ_PWM ".\n"
             "falta o overlay: ponha 'dtoverlay=pwm,pin=18,func=2' em\n"
             "/boot/firmware/config.txt e reinicie.\n");
         return 1;
@@ -230,8 +298,21 @@ int main(int argc, char **argv)
     snprintf(caminho, sizeof caminho, "%s/enable", pwm);
     if (escreve(caminho, "1") != 0) { perror("enable"); return 1; }
 
+    /* Conferência contra a mecânica. Não impede nada: só avisa, porque quem
+     * sabe se a corneta está no dente certo é você, olhando o braço. */
+    double curso = levanta - repouso;
+    printf("curso configurado: %.1f graus (a simulacao mecanica pede %.0f)\n",
+           curso, CURSO_DA_SIMULACAO);
+    if (fabs(fabs(curso) - CURSO_DA_SIMULACAO) > 15.0)
+        fprintf(stderr,
+            "aviso: esse curso esta longe dos %.0f graus da mecanica.\n"
+            "       se o alvo nao levanta direito, veja se a corneta nao\n"
+            "       entrou no dente errado do eixo.\n", CURSO_DA_SIMULACAO);
+
     int erro = 0;
-    if (angulo >= 0.0) {
+    if (modo_calibra) {
+        erro = calibra(pwm, repouso, levanta);
+    } else if (angulo >= 0.0) {
         erro = vai_para(pwm, angulo, "angulo");
     } else {
         erro = vai_para(pwm, repouso, "repouso");
