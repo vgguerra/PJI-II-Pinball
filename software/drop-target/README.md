@@ -14,49 +14,6 @@ de `/sys/class/pwm` a partir do Python — o ganho veio do hardware, não de ser
 
 Custo da troca: um `dtoverlay`, um reboot e `sudo`.
 
-## Ângulos
-
-Medidos na bancada, com a gaiola e o alvo montados:
-
-| | graus |
-|---|---:|
-| Repouso | **54** |
-| Levanta | **97** |
-| Curso | 43 |
-
-A simulação mecânica previa **75** graus de curso
-([`drop-target-simulation.scad`](../../mecanica/modelos-3d/drop-target/simulation/drop-target-simulation.scad):
-`arm_rest_angle = -35`, `arm_lift_angle = -110`). Quem manda é a peça real: o alvo levanta com 43.
-Parte da diferença é de referência — os ângulos da simulação são do braço no sistema dela, e o zero
-do servo depende de onde a corneta entrou no eixo. Mas 32 graus é muita diferença, e vale conferir a
-geometria do braço na simulação **antes de repetir o conjunto três vezes**.
-
-## Compilar e rodar
-
-Uma vez só, em `/boot/firmware/config.txt`:
-
-```
-dtoverlay=pwm,pin=18,func=2
-```
-
-`pin=18` é BCM 18, o mesmo furo físico 12 — **não mexa na ligação**. `func=2` é a função
-alternativa que liga o GPIO18 ao bloco PWM0. Reinicie depois de salvar.
-
-```bash
-make
-sudo ./servo_sobe
-sudo ./servo_sobe --angulo 90 --segura
-```
-
-Precisa de `sudo` porque `/sys/class/pwm` pertence ao root. Para dispensar, uma regra de udev:
-
-```bash
-sudo tee /etc/udev/rules.d/99-pwm.rules <<'EOF'
-SUBSYSTEM=="pwm", ACTION=="add", RUN+="/bin/chgrp -R gpio /sys%p", RUN+="/bin/chmod -R g=u /sys%p"
-EOF
-sudo udevadm control --reload
-```
-
 ## Ligação
 
 Com a Pi **desligada**. Pino 1 fica no canto mais perto do slot do micro-SD; ímpares numa fileira,
@@ -103,36 +60,59 @@ trilho dos L293D) e ligue os terras em comum — sem terra comum o servo não en
 
 Para um teste de bancada com um servo só, o pino 5 V da própria Pi costuma aguentar.
 
-## Instalação
+## Preparar a Pi
 
-O `gpiozero` já vem no Raspberry Pi OS. Se faltar:
+Uma vez só. **Não é opcional**: o programa fala com o bloco PWM do SoC, e sem o overlay esse bloco
+não aparece em `/sys/class/pwm`.
 
-Nada além do compilador, que já vem no Raspberry Pi OS. O programa fala com o PWM de hardware
-escrevendo em `/sys/class/pwm`, então não depende de biblioteca nenhuma além da libc.
-
-### Não tente instalar o `pigpio`
-
-Se `apt` responder `Package 'pigpio' has no installation candidate`, **não é erro seu e não tem
-conserto por `apt`**. O pacote foi removido do Raspberry Pi OS a partir do Trixie: o Debian o tirou
-em 2025 porque o projeto foi abandonado pelo autor e não funciona na Pi 5. Compilar do fonte é
-possível, mas há relatos de *segfault* no Trixie.
-
-O script não precisa dele. Ele usa o backend que existir — hoje o `lgpio` — e informa qual ficou em
-uso na primeira linha da saída. O pulso do `lgpio` é gerado em espaço de usuário e treme um pouco
-quando a Pi está carregada, mas serve bem aqui: o braço só se move de vez em quando, e o script
-solta o servo no fim, o que corta o trem de pulsos.
-
-### Se o tremor incomodar
-
-O caminho atual **não** é o `pigpio`, é o PWM de hardware do próprio SoC, que o kernel expõe em
-`/sys/class/pwm`. Em `/boot/firmware/config.txt`:
+Em `/boot/firmware/config.txt`:
 
 ```
+[all]
 dtoverlay=pwm,pin=18,func=2
 ```
 
-Reinicie e o pulso passa a ser gerado pelo hardware, imune à carga da Pi. Só vale mexer nisso se a
-calibração mostrar que o braço não para quieto — para levantar um alvo, o `lgpio` dá conta.
+`pin=18` é BCM 18, o mesmo furo físico 12 — **não mexa no fio**. `func=2` é a função alternativa
+que liga o GPIO18 ao bloco PWM0. O `[all]` garante que a linha vale para qualquer modelo de placa:
+o `config.txt` é dividido em seções condicionais, e uma linha solta no fim do arquivo pode cair
+numa seção de outro modelo e simplesmente não se aplicar.
+
+Reinicie e confirme:
+
+```bash
+ls /sys/class/pwm/        # tem que aparecer pelo menos um pwmchip0
+```
+
+Fora isso, não precisa instalar nada: o programa só depende da libc.
+
+**O áudio analógico usa o mesmo bloco PWM.** A saída do conector de 3,5 mm é gerada por PWM0/PWM1.
+Se o pinball for ter som pelo P2, esse overlay briga com ele; por HDMI ou placa USB, não há
+conflito.
+
+### Se pedirem para instalar o `pigpio`, ignore
+
+Tutoriais antigos mandam `sudo apt install pigpio`. O `apt` vai responder `Package 'pigpio' has no
+installation candidate`, e **não tem conserto**: o pacote saiu do Raspberry Pi OS a partir do
+Trixie, porque o Debian o removeu em 2025 — projeto abandonado pelo autor e incompatível com a
+Pi 5. Este programa não usa biblioteca nenhuma de GPIO, então nada disso faz falta.
+
+## Compilar e rodar
+
+Com o overlay já no lugar (seção anterior):
+
+```bash
+make
+sudo ./servo_sobe
+```
+
+Precisa de `sudo` porque `/sys/class/pwm` pertence ao root. Para dispensar, uma regra de udev:
+
+```bash
+sudo tee /etc/udev/rules.d/99-pwm.rules <<'EOF'
+SUBSYSTEM=="pwm", ACTION=="add", RUN+="/bin/chgrp -R gpio /sys%p", RUN+="/bin/chmod -R g=u /sys%p"
+EOF
+sudo udevadm control --reload
+```
 
 ## Uso
 
@@ -151,25 +131,52 @@ Entre levantar e recolher há uma pausa de 500 ms (`TEMPO_NO_TOPO_MS`), para o a
 engate da gaiola antes de perder o apoio do braço. **Se o alvo cair sozinho logo depois de
 levantar, é esse número que precisa aumentar** — não o ângulo.
 
+## Ângulos
+
+Medidos na bancada, com a gaiola e o alvo montados:
+
+| | graus |
+|---|---:|
+| Repouso | **54** |
+| Levanta | **97** |
+| Curso | 43 |
+
+A simulação mecânica previa **75** graus de curso
+([`drop-target-simulation.scad`](../../mecanica/modelos-3d/drop-target/simulation/drop-target-simulation.scad):
+`arm_rest_angle = -35`, `arm_lift_angle = -110`). Quem manda é a peça real: o alvo levanta com 43.
+Parte da diferença é de referência — os ângulos da simulação são do braço no sistema dela, e o zero
+do servo depende de onde a corneta entrou no eixo. Mas 32 graus é muita diferença, e vale conferir a
+geometria do braço na simulação **antes de repetir o conjunto três vezes**.
+
 ## Calibrar os ângulos
 
-A simulação mecânica define o **curso**, não a posição absoluta: `arm_rest_angle = -35` e
-`arm_lift_angle = -110` em
-[`drop-target-simulation.scad`](../../mecanica/modelos-3d/drop-target/simulation/drop-target-simulation.scad),
-ou seja **75° entre repouso e levantado**. Onde esses 75° caem na escala de 0 a 180 do SG90 depende
-de como a corneta entrou no eixo na montagem, e o eixo do SG90 é estriado — só dá para encaixar de
-poucas em poucas posições.
+Os valores da seção **Ângulos** já saíram desse procedimento. Refaça se trocar a corneta de
+posição, se montar outro conjunto, ou se o alvo não levantar por completo.
 
-Procedimento, com o alvo montado na gaiola:
+```bash
+sudo ./servo_sobe --calibra
+```
 
-1. `--angulo 90 --segura` e encaixe a corneta o mais perto possível do meio do curso que você quer.
-2. Vá baixando com `--angulo` até achar onde o braço fica logo abaixo do alvo caído. É o repouso.
-3. Suba com `--angulo` até o alvo levantar por completo. É o levanta.
-4. Confira se a diferença deu perto de 75°. Se deu muito diferente, a corneta está na posição errada
-   no eixo: volte ao passo 1 e gire um dente.
-5. Fixe os dois valores em `ANGULO_REPOUSO` e `ANGULO_LEVANTA` no script.
+Digite um ângulo e Enter: o braço vai e **fica**, segurando a posição, para você ver onde ele
+parou. `r` volta ao repouso, `l` vai ao levanta, `q` sai.
 
-Não force o servo contra o alvo travado. Ele não tem proteção de corrente e queima o motor.
+Com o alvo montado na gaiola:
+
+1. Comece em `90` e veja para que lado o braço aponta.
+2. Vá digitando números até ele ficar **logo abaixo do alvo caído**, sem encostar. É o **repouso**.
+3. Suba até o **alvo levantar por completo**. É o **levanta**.
+4. Teste o par: `sudo ./servo_sobe --repouso X --levanta Y`.
+5. Fixe em `ANGULO_REPOUSO` e `ANGULO_LEVANTA` no [`servo_sobe.c`](servo_sobe.c) e rode `make`.
+
+Os dois são independentes: o levanta pode ser **menor** que o repouso, se a corneta ficou apontando
+para o outro lado.
+
+O programa imprime o curso resultante e avisa se ele fugir muito dos 43° medidos. Não impede nada —
+é para pegar corneta encaixada no dente errado do eixo estriado, que é estriado e só aceita poucas
+posições. Nesse caso remontar um dente é melhor que compensar no software, porque o curso errado
+custa torque justamente no fim, onde o alvo é mais pesado de levantar.
+
+**Não force o servo contra o alvo travado.** Ele não tem proteção de corrente e queima.
 
 ## Próximo passo
 
