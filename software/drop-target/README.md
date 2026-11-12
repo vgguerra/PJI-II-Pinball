@@ -178,14 +178,31 @@ No jogo:
 sudo ./drop_target
 ```
 
-Ele arma a chave e fica esperando. A primeira saída confirma o arranjo e o nível da linha:
+**Ao iniciar ele arma o mecanismo.** Lê a chave e, se o alvo estiver caído, levanta antes de passar
+a escutar:
 
 ```
 arranjo : alvo em pe deixa a chave PRESSIONADA, entao a queda e a SUBIDA da linha
-linha agora: BAIXO (chave fechada)
+linha agora: ALTO (chave aberta)
+alvo esta caido. levantando antes de comecar.
+  levanta 102.0 graus
+  volta    51.0 graus
+alvo em pe
 ```
 
-Com o alvo em pé, esse `BAIXO` é o certo. Quando o alvo cai: espera 2 s para a bola sair da frente, levanta
+Isso não é cosmético: o gatilho é a **borda**, e um alvo parado em baixo não gera borda nenhuma. Sem
+armar, um jogo que terminou com o alvo derrubado começaria o próximo com um alvo morto, que nunca
+mais subiria.
+
+Com o alvo já em pé, ele só confirma:
+
+```
+linha agora: BAIXO (chave fechada)
+alvo ja esta em pe
+```
+
+Se o braço subir e a chave **não** mudar de estado, ele avisa e lista as três causas possíveis: o
+alvo não travou no engate, a chave não está sendo acionada por ele, ou o arranjo está trocado. Quando o alvo cai: espera 2 s para a bola sair da frente, levanta
 o alvo até travar no engate, e recolhe o braço. Depois volta a escutar. `Ctrl+C` para sair.
 
 Na bancada, para calibrar ou testar o servo sozinho:

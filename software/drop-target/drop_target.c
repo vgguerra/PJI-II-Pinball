@@ -1,8 +1,13 @@
 /* Drop target automático: a chave acusa o alvo caído, e o servo o levanta.
  *
- * Ciclo, repetindo para sempre:
+ * Ao iniciar ele arma o mecanismo: se o alvo estiver caído, levanta antes de
+ * passar a escutar. Isso importa porque o gatilho é a borda — alvo parado em
+ * baixo não gera borda nenhuma, e sem isso o jogo começaria com um alvo
+ * morto, que nunca mais subiria.
  *
- *   1. espera a bola derrubar o alvo, que fecha a chave de fim de curso;
+ * Depois, o ciclo se repete para sempre:
+ *
+ *   1. espera a bola derrubar o alvo, que solta a chave de fim de curso;
  *   2. espera 2 s, para a bola sair da frente antes do braço subir;
  *   3. o braço levanta o alvo até ele travar no engate da gaiola;
  *   4. o braço volta ao repouso, para não ficar no caminho da próxima bolada.
@@ -179,6 +184,18 @@ static int le_nivel(int linha_fd)
     return (int)(v.bits & 1ULL);
 }
 
+/* Descarta os eventos que ficaram na fila. O alvo subindo mexe na chave e o
+ * braço voltando sacode a gaiola: isso gera borda que é ruído do próprio
+ * ciclo, não uma bolada nova. */
+static void descarta_eventos(int linha_fd)
+{
+    struct gpio_v2_line_event ev;
+    int antes = fcntl(linha_fd, F_GETFL);
+    fcntl(linha_fd, F_SETFL, antes | O_NONBLOCK);
+    while (read(linha_fd, &ev, sizeof ev) > 0) { }
+    fcntl(linha_fd, F_SETFL, antes);
+}
+
 static int ciclo_do_servo(const Pwm *pwm)
 {
     printf("  levanta %5.1f graus\n", ANGULO_LEVANTA);
@@ -235,25 +252,50 @@ int main(int argc, char **argv)
            em_pe_pressionada ? "PRESSIONADA" : "SOLTA",
            em_pe_pressionada ? "SUBIDA" : "descida");
 
-    /* Conferência: o nível agora, com o alvo em pé, tem de casar com o
-     * arranjo. Não impede nada, mas avisa antes de você ficar derrubando o
-     * alvo sem o programa reagir. */
-    int nivel = le_nivel(linha_fd);
-    int esperado = em_pe_pressionada ? 0 : 1;
-    printf("linha agora: %s\n", nivel < 0 ? "nao consegui ler"
-           : nivel ? "ALTO (chave aberta)" : "BAIXO (chave fechada)");
-    if (nivel >= 0 && nivel != esperado)
-        printf("  atencao: com este arranjo o alvo EM PE deveria dar %s.\n"
-               "  se o alvo esta em pe agora, o arranjo esta trocado: %s\n",
-               esperado ? "ALTO" : "BAIXO",
-               em_pe_pressionada ? "rode com --chave-solta-em-pe"
-                                 : "tire o --chave-solta-em-pe");
-
     Pwm pwm;
     if (pwm_abre(&pwm, pwmchip, canal, ANGULO_REPOUSO) != 0)
         return 1;
     dorme_ms(TEMPO_DE_GIRO_MS);
 
+    /* Armar o mecanismo antes de começar a escutar. Se o jogo anterior
+     * terminou com o alvo derrubado, ele está derrubado agora, e começar
+     * assim é começar com um alvo a menos: ninguém vai levantá-lo, porque o
+     * gatilho é a BORDA, e alvo parado em baixo não gera borda nenhuma. */
+    const int nivel_em_pe = em_pe_pressionada ? 0 : 1;
+    int nivel = le_nivel(linha_fd);
+
+    printf("linha agora: %s\n", nivel < 0 ? "nao consegui ler"
+           : nivel ? "ALTO (chave aberta)" : "BAIXO (chave fechada)");
+
+    if (nivel < 0) {
+        fprintf(stderr, "nao consegui ler a chave; sigo sem armar\n");
+    } else if (nivel == nivel_em_pe) {
+        printf("alvo ja esta em pe\n");
+    } else {
+        printf("alvo esta caido. levantando antes de comecar.\n");
+        if (ciclo_do_servo(&pwm) != 0)
+            return 1;
+        descarta_eventos(linha_fd);
+
+        nivel = le_nivel(linha_fd);
+        if (nivel == nivel_em_pe) {
+            printf("alvo em pe\n");
+        } else {
+            /* O braço fez o movimento e a chave não mudou. Ou o alvo não
+             * travou no engate e caiu de volta, ou a chave não está sendo
+             * acionada por ele, ou o arranjo configurado é o oposto. */
+            fprintf(stderr,
+                "aviso: o braco subiu mas a chave nao mudou de estado.\n"
+                "  - o alvo pode nao estar travando no engate: aumente\n"
+                "    TEMPO_NO_TOPO_MS, ou confira o angulo de levanta;\n"
+                "  - ou a chave nao esta sendo acionada pelo alvo;\n"
+                "  - ou o arranjo esta trocado: tente %s.\n",
+                em_pe_pressionada ? "--chave-solta-em-pe"
+                                  : "tirar o --chave-solta-em-pe");
+        }
+    }
+
+    descarta_eventos(linha_fd);
     printf("\npronto. derrube o alvo. Ctrl+C para sair.\n");
 
     long ultima = 0;
@@ -284,14 +326,7 @@ int main(int argc, char **argv)
         if (ciclo_do_servo(&pwm) != 0)
             break;
 
-        /* O alvo subindo abre a chave, e o braço voltando sacode a gaiola.
-         * Qualquer evento gerado nisso é ruído do próprio ciclo, não uma nova
-         * bolada: descarto o que ficou na fila antes de voltar a escutar. */
-        int antes = fcntl(linha_fd, F_GETFL);
-        fcntl(linha_fd, F_SETFL, antes | O_NONBLOCK);
-        while (read(linha_fd, &ev, sizeof ev) > 0) { }
-        fcntl(linha_fd, F_SETFL, antes);
-
+        descarta_eventos(linha_fd);
         ultima = agora_ms();
         printf("  pronto para a proxima\n");
     }
