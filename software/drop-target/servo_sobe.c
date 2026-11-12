@@ -311,10 +311,30 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    /* O período vem antes do duty: o kernel recusa duty maior que o período,
-     * e o período que vier de fábrica pode ser 0. */
+    /* Zerar o duty ANTES de mexer no período. O kernel recusa período menor
+     * que o duty corrente, e o duty corrente é o que sobrou da última vez que
+     * alguém usou este canal — pode ter sido outro programa, ou um teste à
+     * mão com período de 1 segundo. Sem isto, a escrita do período falha com
+     * EINVAL e o programa morre sem ter feito nada.
+     *
+     * Escrever zero é sempre aceito, então um erro aqui só pode ser canal
+     * inacessível, e nesse caso o período logo abaixo também falha e é ele
+     * quem reclama. */
+    snprintf(caminho, sizeof caminho, "%s/duty_cycle", pwm);
+    escreve_long(caminho, 0);
+
     snprintf(caminho, sizeof caminho, "%s/period", pwm);
-    if (escreve_long(caminho, PERIODO_NS) != 0) { perror("period"); return 1; }
+    if (escreve_long(caminho, PERIODO_NS) != 0) {
+        fprintf(stderr, "nao consegui ajustar o periodo em %s: %s\n",
+                caminho, strerror(errno));
+        if (errno == EINVAL)
+            fprintf(stderr,
+                "EINVAL aqui quase sempre e duty_cycle maior que o periodo novo.\n"
+                "limpe o canal a mao:\n"
+                "  sudo sh -c 'echo 0 > %s/enable; echo 0 > %s/duty_cycle'\n",
+                pwm, pwm);
+        return 1;
+    }
 
     snprintf(caminho, sizeof caminho, "%s/duty_cycle", pwm);
     if (escreve_long(caminho, pulso_de(angulo < 0 ? repouso : angulo)) != 0) {
