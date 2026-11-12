@@ -73,21 +73,33 @@ Para um teste de bancada com um servo só, o pino 5 V da própria Pi costuma agu
 
 ## Ligação da chave
 
-A `KW11-3Z-3` tem três terminais. Use **C** (comum) e **NO** (normal aberto); o **NC** fica sem uso.
-
-| Terminal | Vai para | Pino físico |
+| Terminal da chave | Vai para | Pino físico |
 |---|---|---|
-| **C** (comum) | GND | **14** |
-| **NO** (normal aberto) | BCM23 | **16** |
+| Um deles | GND | **14** |
+| O outro | BCM23 | **16** |
 
-Os dois são vizinhos, na mesma fileira dos pares, e não colidem com os três do servo (2, 6 e 12).
+**Tanto faz qual vai em qual** — chave é contato puro, não tem polaridade. Os dois furos são
+vizinhos, na mesma fileira dos pares, e não colidem com os três do servo (2, 6 e 12).
 
-**Não precisa de resistor.** O programa liga o *pull-up interno* da Raspberry: em repouso a linha
-fica em 3,3 V, e quando o alvo cai e fecha a chave ela é puxada ao terra.
+**Não precisa de resistor.** O programa liga o *pull-up interno* da Raspberry.
 
-O gatilho é a **borda de descida**, não o nível. Isso importa: com o alvo caído a chave fica fechada
-e a linha fica baixa o tempo todo, então nível baixo é o estado normal de um alvo derrubado, não um
-evento.
+### Qual borda é a queda
+
+Depende de como a chave foi montada na gaiola, e os dois arranjos existem:
+
+| Arranjo | Alvo em pé | Alvo caído | Evento |
+|---|---|---|---|
+| **O nosso** (padrão) | chave pressionada, linha **baixa** | chave solta, linha **alta** | **subida** |
+| O oposto (`--chave-solta-em-pe`) | chave solta, linha alta | chave pressionada, linha baixa | descida |
+
+Na nossa gaiola o alvo em pé segura a alavanca, e **a queda solta a chave**. Por isso o padrão é
+disparar na subida.
+
+O gatilho é a **borda**, não o nível: enquanto o alvo estiver caído a linha fica parada no novo
+nível, e isso é o estado normal de um alvo derrubado, não um evento novo.
+
+Ao iniciar, o programa lê a linha e diz em que nível ela está. Se não casar com o arranjo
+configurado, ele avisa e diz qual opção usar — então não é preciso adivinhar.
 
 BCM23 está no banco de 16 entradas de sensores do projeto
 ([`docs/05-pinout.md`](../../docs/05-pinout.md), seção 5.1), então é um pino já previsto para isso.
@@ -166,7 +178,14 @@ No jogo:
 sudo ./drop_target
 ```
 
-Ele arma a chave e fica esperando. Quando o alvo cai: espera 2 s para a bola sair da frente, levanta
+Ele arma a chave e fica esperando. A primeira saída confirma o arranjo e o nível da linha:
+
+```
+arranjo : alvo em pe deixa a chave PRESSIONADA, entao a queda e a SUBIDA da linha
+linha agora: BAIXO (chave fechada)
+```
+
+Com o alvo em pé, esse `BAIXO` é o certo. Quando o alvo cai: espera 2 s para a bola sair da frente, levanta
 o alvo até travar no engate, e recolhe o braço. Depois volta a escutar. `Ctrl+C` para sair.
 
 Na bancada, para calibrar ou testar o servo sozinho:

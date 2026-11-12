@@ -9,19 +9,22 @@
  *
  * LIGAÇÃO DA CHAVE (KW11-3Z-3)
  *
- *     Terminal C  (comum)          ->  GND,   furo físico 14
- *     Terminal NO (normal aberto)  ->  BCM23, furo físico 16
+ *     Um terminal   ->  GND,   furo físico 14
+ *     Outro terminal ->  BCM23, furo físico 16
  *
- * O furo 14 e o 16 são vizinhos, na mesma fileira dos pares. O terceiro
- * terminal da chave, NC, fica sem uso.
+ * Chave é contato puro, não tem polaridade: tanto faz qual terminal vai em
+ * qual furo. O furo 14 e o 16 são vizinhos, na mesma fileira dos pares.
  *
  * Não precisa de resistor: o programa liga o pull-up interno da própria
- * Raspberry. Em repouso a linha fica em 3,3 V; quando o alvo cai e fecha a
- * chave, ela é puxada ao terra. O evento que interessa é essa descida.
+ * Raspberry.
  *
- * Sobre o alvo caído: enquanto ele estiver em baixo a chave segue fechada, e
- * a linha segue em nível baixo. Por isso o gatilho é a BORDA de descida, e
- * não o nível: nível baixo é o estado normal de um alvo derrubado.
+ * Na nossa gaiola, o alvo EM PÉ mantém a chave pressionada, e a queda a
+ * solta. Então a linha fica baixa com o alvo em pé e SOBE quando ele cai: é
+ * essa subida o evento. Para o arranjo oposto, --chave-solta-em-pe.
+ *
+ * O gatilho é a BORDA, não o nível, porque enquanto o alvo estiver caído a
+ * linha fica parada no novo nível — isso é o estado normal de um alvo
+ * derrubado, não um evento novo.
  *
  * COMPILAR E RODAR
  *
@@ -120,7 +123,7 @@ static int abre_gpiochip(const char *forcado)
 /* Pede a linha como entrada, com pull-up interno e aviso de borda de descida.
  * Tenta primeiro com o debounce do kernel; se o driver não suportar, repete
  * sem ele e o filtro em software assume. */
-static int pede_linha(int chip_fd, int *tem_debounce_do_kernel)
+static int pede_linha(int chip_fd, int em_pe_pressionada, int *tem_debounce_do_kernel)
 {
     for (int com_debounce = 1; com_debounce >= 0; com_debounce--) {
         struct gpio_v2_line_request req;
@@ -129,9 +132,21 @@ static int pede_linha(int chip_fd, int *tem_debounce_do_kernel)
         req.offsets[0] = LINHA_CHAVE;
         req.num_lines = 1;
         snprintf(req.consumer, sizeof req.consumer, "drop-target");
+        /* Qual borda é a queda do alvo depende de como a chave foi montada
+         * na gaiola, e os dois arranjos existem:
+         *
+         *   alvo em pé PRESSIONA a chave  (o nosso)
+         *       em pé  -> contato fechado -> linha baixa
+         *       caiu   -> contato solto   -> linha sobe     <- evento
+         *
+         *   alvo em pé deixa a chave SOLTA
+         *       em pé  -> contato aberto  -> linha alta
+         *       caiu   -> contato fechado -> linha desce    <- evento
+         */
         req.config.flags = GPIO_V2_LINE_FLAG_INPUT
                          | GPIO_V2_LINE_FLAG_BIAS_PULL_UP
-                         | GPIO_V2_LINE_FLAG_EDGE_FALLING;
+                         | (em_pe_pressionada ? GPIO_V2_LINE_FLAG_EDGE_RISING
+                                              : GPIO_V2_LINE_FLAG_EDGE_FALLING);
 
         if (com_debounce) {
             req.config.num_attrs = 1;
@@ -151,6 +166,19 @@ static int pede_linha(int chip_fd, int *tem_debounce_do_kernel)
     return -1;
 }
 
+/* Lê o nível atual da linha. Serve de conferência na partida: o nível com o
+ * alvo em pé tem de casar com o arranjo configurado, senão o programa vai
+ * esperar a borda errada e nunca disparar. */
+static int le_nivel(int linha_fd)
+{
+    struct gpio_v2_line_values v;
+    memset(&v, 0, sizeof v);
+    v.mask = 1ULL;
+    if (ioctl(linha_fd, GPIO_V2_LINE_GET_VALUES_IOCTL, &v) != 0)
+        return -1;
+    return (int)(v.bits & 1ULL);
+}
+
 static int ciclo_do_servo(const Pwm *pwm)
 {
     printf("  levanta %5.1f graus\n", ANGULO_LEVANTA);
@@ -168,16 +196,21 @@ static int ciclo_do_servo(const Pwm *pwm)
 int main(int argc, char **argv)
 {
     const char *gpiochip = NULL;
-    int pwmchip = -1, canal = 0;
+    int pwmchip = -1, canal = 0, em_pe_pressionada = 1;
 
     for (int i = 1; i < argc; i++) {
         int tem_valor = (i + 1 < argc);
-        if (!strcmp(argv[i], "--gpiochip") && tem_valor) gpiochip = argv[++i];
+        if (!strcmp(argv[i], "--chave-solta-em-pe")) em_pe_pressionada = 0;
+        else if (!strcmp(argv[i], "--gpiochip") && tem_valor) gpiochip = argv[++i];
         else if (!strcmp(argv[i], "--chip")  && tem_valor) pwmchip = atoi(argv[++i]);
         else if (!strcmp(argv[i], "--canal") && tem_valor) canal   = atoi(argv[++i]);
         else {
-            printf("uso: sudo %s [--gpiochip /dev/gpiochipN] [--chip N] [--canal N]\n",
-                   argv[0]);
+            printf("uso: sudo %s [--chave-solta-em-pe] [--gpiochip /dev/gpiochipN]\n"
+                   "                    [--chip N] [--canal N]\n\n"
+                   "  Por padrao o alvo EM PE mantem a chave PRESSIONADA, que e\n"
+                   "  como a nossa gaiola esta montada: a queda SOLTA a chave.\n\n"
+                   "  --chave-solta-em-pe   para o arranjo oposto, em que o alvo\n"
+                   "                        caido e que pressiona a chave.\n", argv[0]);
             return strcmp(argv[i], "--help") && strcmp(argv[i], "-h") ? 2 : 0;
         }
     }
@@ -190,7 +223,7 @@ int main(int argc, char **argv)
         return 1;
 
     int debounce_do_kernel = 0;
-    int linha_fd = pede_linha(chip_fd, &debounce_do_kernel);
+    int linha_fd = pede_linha(chip_fd, em_pe_pressionada, &debounce_do_kernel);
     if (linha_fd < 0)
         return 1;
 
@@ -198,6 +231,23 @@ int main(int argc, char **argv)
            LINHA_CHAVE);
     printf("debounce: %s\n",
            debounce_do_kernel ? "pelo kernel, 20 ms" : "em software, 20 ms");
+    printf("arranjo : alvo em pe deixa a chave %s, entao a queda e a %s da linha\n",
+           em_pe_pressionada ? "PRESSIONADA" : "SOLTA",
+           em_pe_pressionada ? "SUBIDA" : "descida");
+
+    /* Conferência: o nível agora, com o alvo em pé, tem de casar com o
+     * arranjo. Não impede nada, mas avisa antes de você ficar derrubando o
+     * alvo sem o programa reagir. */
+    int nivel = le_nivel(linha_fd);
+    int esperado = em_pe_pressionada ? 0 : 1;
+    printf("linha agora: %s\n", nivel < 0 ? "nao consegui ler"
+           : nivel ? "ALTO (chave aberta)" : "BAIXO (chave fechada)");
+    if (nivel >= 0 && nivel != esperado)
+        printf("  atencao: com este arranjo o alvo EM PE deveria dar %s.\n"
+               "  se o alvo esta em pe agora, o arranjo esta trocado: %s\n",
+               esperado ? "ALTO" : "BAIXO",
+               em_pe_pressionada ? "rode com --chave-solta-em-pe"
+                                 : "tire o --chave-solta-em-pe");
 
     Pwm pwm;
     if (pwm_abre(&pwm, pwmchip, canal, ANGULO_REPOUSO) != 0)
@@ -216,7 +266,9 @@ int main(int argc, char **argv)
             perror("read");
             break;
         }
-        if (n != (ssize_t)sizeof ev || ev.id != GPIO_V2_LINE_EVENT_FALLING_EDGE)
+        unsigned borda = em_pe_pressionada ? GPIO_V2_LINE_EVENT_RISING_EDGE
+                                           : GPIO_V2_LINE_EVENT_FALLING_EDGE;
+        if (n != (ssize_t)sizeof ev || ev.id != borda)
             continue;
 
         /* Guarda em software: vale mesmo com o debounce do kernel, porque a
