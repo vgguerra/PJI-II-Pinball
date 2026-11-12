@@ -1,11 +1,22 @@
-# Versão em C do acionamento do servo. Sem biblioteca externa: fala direto
-# com o PWM de hardware por /sys/class/pwm, então basta a libc.
-CFLAGS = -O2 -Wall -Wextra -Wpedantic -std=c11
-LDLIBS = -lm
+# Sem biblioteca externa: os programas falam direto com o kernel, pelo sysfs
+# do PWM e pela uAPI de GPIO do /dev/gpiochip. Basta a libc.
+#
+#   drop_target        o que roda no jogo
+#   bancada/servo_sobe teste manual do servo, sem a chave
+CFLAGS  = -O2 -Wall -Wextra -Wpedantic -std=c11 -Ilib
+LDLIBS  = -lm
 
-servo_sobe: servo_sobe.c
+all: drop_target bancada/servo_sobe
+
+drop_target: drop_target.o lib/pwm.o
+	$(CC) $^ $(LDLIBS) -o $@
+
+bancada/servo_sobe: bancada/servo_sobe.o lib/pwm.o
+	$(CC) $^ $(LDLIBS) -o $@
+
+drop_target.o bancada/servo_sobe.o lib/pwm.o: lib/pwm.h
 
 clean:
-	rm -f servo_sobe
+	rm -f drop_target bancada/servo_sobe *.o lib/*.o bancada/*.o
 
-.PHONY: clean
+.PHONY: all clean

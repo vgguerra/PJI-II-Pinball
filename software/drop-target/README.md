@@ -1,20 +1,24 @@
 # Drop target — software
 
-Código de acionamento do drop target na Raspberry Pi 4.
+Acionamento do drop target na Raspberry Pi. A bola derruba o alvo, a chave de fim de curso acusa a
+queda, e o servo levanta o alvo de volta.
 
-| Arquivo | O que faz |
-|---|---|
-| [`servo_sobe.c`](servo_sobe.c) | Teste de bancada: leva o braço do servo para repouso e depois para a posição que levanta o alvo |
+```
+drop_target.c     o que roda no jogo: escuta a chave e faz o ciclo
+Makefile
+lib/pwm.c .h      acionamento do servo pelo PWM de hardware do SoC
+bancada/
+  servo_sobe.c    teste manual do servo, sem a chave. Serve para calibrar
+```
 
-Houve uma versão em Python, com `gpiozero`. Foi removida quando o acionamento passou para o PWM
-de hardware. O que decidiu não foi a linguagem: no Python o pulso era montado pelo `lgpio`, em
-espaço de usuário, e tremia quando a Pi estava ocupada. Aqui quem conta o tempo é o bloco PWM do
-SoC, então o pulso sai igual com a Pi parada ou carregada. Daria para escrever nos mesmos arquivos
-de `/sys/class/pwm` a partir do Python — o ganho veio do hardware, não de ser C.
+Na raiz fica só o que roda de verdade. Nenhum dos dois depende de biblioteca externa: eles falam
+direto com o kernel, pelo sysfs do PWM e pela uAPI de GPIO do `/dev/gpiochip`. Basta a libc.
 
-Custo da troca: um `dtoverlay`, um reboot e `sudo`.
+Houve uma versão em Python, com `gpiozero`. Foi removida quando o acionamento passou para o PWM de
+hardware. O que decidiu não foi a linguagem: no Python o pulso era montado pelo `lgpio`, em espaço
+de usuário, e tremia quando a Pi estava ocupada. Aqui quem conta o tempo é o bloco PWM do SoC.
 
-## Ligação
+## Ligação do servo
 
 Com a Pi **desligada**. Pino 1 fica no canto mais perto do slot do micro-SD; ímpares numa fileira,
 pares na outra.
@@ -67,6 +71,38 @@ trilho dos L293D) e ligue os terras em comum — sem terra comum o servo não en
 
 Para um teste de bancada com um servo só, o pino 5 V da própria Pi costuma aguentar.
 
+## Ligação da chave
+
+A `KW11-3Z-3` tem três terminais. Use **C** (comum) e **NO** (normal aberto); o **NC** fica sem uso.
+
+| Terminal | Vai para | Pino físico |
+|---|---|---|
+| **C** (comum) | GND | **14** |
+| **NO** (normal aberto) | BCM23 | **16** |
+
+Os dois são vizinhos, na mesma fileira dos pares, e não colidem com os três do servo (2, 6 e 12).
+
+**Não precisa de resistor.** O programa liga o *pull-up interno* da Raspberry: em repouso a linha
+fica em 3,3 V, e quando o alvo cai e fecha a chave ela é puxada ao terra.
+
+O gatilho é a **borda de descida**, não o nível. Isso importa: com o alvo caído a chave fica fechada
+e a linha fica baixa o tempo todo, então nível baixo é o estado normal de um alvo derrubado, não um
+evento.
+
+BCM23 está no banco de 16 entradas de sensores do projeto
+([`docs/05-pinout.md`](../../docs/05-pinout.md), seção 5.1), então é um pino já previsto para isso.
+
+### Repique
+
+A `KW11-3Z-3` é de ação rápida: os contatos batem e repicam por alguns milissegundos antes de
+assentar. Sem filtro, uma única queda do alvo vira três ou quatro eventos, e o servo dispara várias
+vezes seguidas.
+
+O programa pede ao kernel um *debounce* de 20 ms na própria linha. Se o driver não suportar, ele
+repete o pedido sem isso e usa um filtro em software equivalente — e diz qual dos dois ficou em uso.
+O filtro em software roda sempre de qualquer forma, porque a mesa treme e o alvo pode bater duas
+vezes no engate.
+
 ## Preparar a Pi
 
 Uma vez só. **Não é opcional**: o programa fala com o bloco PWM do SoC, e sem o overlay esse bloco
@@ -109,8 +145,9 @@ Com o overlay já no lugar (seção anterior):
 
 ```bash
 make
-sudo ./servo_sobe
 ```
+
+Gera os dois: `drop_target` na raiz e `bancada/servo_sobe`.
 
 Precisa de `sudo` porque `/sys/class/pwm` pertence ao root. Para dispensar, uma regra de udev:
 
@@ -123,20 +160,30 @@ sudo udevadm control --reload
 
 ## Uso
 
+No jogo:
+
 ```bash
-sudo ./servo_sobe                            # ciclo completo
-sudo ./servo_sobe --calibra                  # move a cada angulo digitado
-sudo ./servo_sobe --repouso 50 --levanta 95  # testa um par sem recompilar
-sudo ./servo_sobe --angulo 70                # vai a um angulo so, sem voltar
+sudo ./drop_target
 ```
 
-O ciclo completo é **repouso → levanta → volta ao repouso**. A volta não é enfeite: com o braço
-levantado ele fica no caminho do alvo, e a bola não consegue derrubá-lo de novo. O ciclo só fecha
-quando o braço está de volta embaixo do alvo, pronto para a próxima.
+Ele arma a chave e fica esperando. Quando o alvo cai: espera 2 s para a bola sair da frente, levanta
+o alvo até travar no engate, e recolhe o braço. Depois volta a escutar. `Ctrl+C` para sair.
+
+Na bancada, para calibrar ou testar o servo sozinho:
+
+```bash
+sudo ./bancada/servo_sobe              # ciclo completo
+sudo ./bancada/servo_sobe --calibra    # move a cada angulo digitado
+sudo ./bancada/servo_sobe --angulo 70  # vai a um angulo so, sem voltar
+sudo ./bancada/servo_sobe --help
+```
+
+O ciclo é **repouso → levanta → volta ao repouso**. A volta não é enfeite: com o braço levantado ele
+fica no caminho do alvo, e a bola não consegue derrubá-lo de novo.
 
 Entre levantar e recolher há uma pausa de 500 ms (`TEMPO_NO_TOPO_MS`), para o alvo assentar no
-engate da gaiola antes de perder o apoio do braço. **Se o alvo cair sozinho logo depois de
-levantar, é esse número que precisa aumentar** — não o ângulo.
+engate antes de perder o apoio do braço. **Se o alvo cair sozinho logo depois de levantar, é esse
+número que precisa aumentar** — não o ângulo.
 
 ## Ângulos
 
@@ -161,7 +208,7 @@ Os valores da seção **Ângulos** já saíram desse procedimento. Refaça se tr
 posição, se montar outro conjunto, ou se o alvo não levantar por completo.
 
 ```bash
-sudo ./servo_sobe --calibra
+sudo ./bancada/servo_sobe --calibra
 ```
 
 Digite um ângulo e Enter: o braço vai e **fica**, segurando a posição, para você ver onde ele
@@ -172,8 +219,10 @@ Com o alvo montado na gaiola:
 1. Comece em `90` e veja para que lado o braço aponta.
 2. Vá digitando números até ele ficar **logo abaixo do alvo caído**, sem encostar. É o **repouso**.
 3. Suba até o **alvo levantar por completo**. É o **levanta**.
-4. Teste o par: `sudo ./servo_sobe --repouso X --levanta Y`.
-5. Fixe em `ANGULO_REPOUSO` e `ANGULO_LEVANTA` no [`servo_sobe.c`](servo_sobe.c) e rode `make`.
+4. Teste o par: `sudo ./bancada/servo_sobe --repouso X --levanta Y`.
+5. Fixe em `ANGULO_REPOUSO` e `ANGULO_LEVANTA` nos **dois** arquivos —
+   [`drop_target.c`](drop_target.c) e [`bancada/servo_sobe.c`](bancada/servo_sobe.c) — e rode
+   `make`.
 
 Os dois são independentes: o levanta pode ser **menor** que o repouso, se a corneta ficou apontando
 para o outro lado.
@@ -187,6 +236,15 @@ custa torque justamente no fim, onde o alvo é mais pesado de levantar.
 
 ## Próximo passo
 
-Ler o micro switch `KW11-3Z-3` para detectar a queda do alvo e disparar a subida sozinho. A chave é
-de ação rápida e repica — vai precisar de `bouncetime`, como já está anotado em
-[`docs/09-pendencias-e-roadmap.md`](../../docs/09-pendencias-e-roadmap.md).
+**Só existem dois canais de PWM por hardware na Raspberry**, e o pinball vai ter **três** drop
+targets. Os três servos não cabem nesse caminho. As saídas são:
+
+- um **PCA9685** no barramento I²C: 16 canais de servo, gerados fora da Pi, e o projeto já tem I²C
+  para os PCF8574;
+- ou voltar os outros dois para PWM por software, aceitando o tremor.
+
+O PCA9685 é o caminho normal em pinball caseiro, e vale decidir isso antes de imprimir os outros
+dois conjuntos.
+
+Além disso: a simulação mecânica previa 75° de curso e a peça real pediu 43. Vale conferir a
+geometria do braço no `.scad` antes de repetir o conjunto três vezes.

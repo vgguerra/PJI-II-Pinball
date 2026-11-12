@@ -1,1 +1,4 @@
-servo_sobe
+# binarios e objetos
+drop_target
+bancada/servo_sobe
+*.o
