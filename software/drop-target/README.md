@@ -19,26 +19,33 @@ Custo da troca: um `dtoverlay`, um reboot e `sudo`.
 Com a Pi **desligada**. Pino 1 fica no canto mais perto do slot do micro-SD; ímpares numa fileira,
 pares na outra.
 
+**Os três ficam na mesma fileira, a dos pares**, nos furos mais fáceis de contar.
+
 | Fio do SG90 | Vai para | Pino físico |
 |---|---|---|
-| Laranja / amarelo (sinal) | GPIO18 | **12** |
-| Marrom / preto (GND) | GND | **14** |
 | Vermelho (+5 V) | 5 V — **ver abaixo** | **2** |
+| Marrom / preto (GND) | GND | **6** |
+| Laranja / amarelo (sinal) | GPIO18 (BCM) | **12** |
 
 ```
  ímpar                      par
  ─────────────────          ─────────────────
-  1  3V3                     2  5V       <-- VERMELHO
+  1  3V3                     2  5V       <-- VERMELHO   (1o furo)
   3  GPIO2  (SDA, I2C)       4  5V
-  5  GPIO3  (SCL, I2C)       6  GND
+  5  GPIO3  (SCL, I2C)       6  GND      <-- MARROM     (3o furo)
   7  GPIO4  (sensor)         8  GPIO14
   9  GND                    10  GPIO15
- 11  GPIO17 (sensor)        12  GPIO18   <-- LARANJA (sinal)
- 13  GPIO27 (sensor)        14  GND      <-- MARROM
+ 11  GPIO17 (sensor)        12  GPIO18   <-- LARANJA    (6o furo, sinal)
+ 13  GPIO27 (sensor)        14  GND
 ```
 
-O terra vai no 14, e não no 6, de propósito: achado o 12, o 14 é o buraco vizinho na mesma fileira.
-O 6 funciona igual, mas obriga a contar de novo e é onde se erra.
+Contando da ponta da fileira par, são o **1º, o 3º e o 6º** furo.
+
+- **Sinal no 12.** É obrigatório. Os pinos de PWM por hardware são BCM 12, 13, 18 e 19 — furos 32,
+  33, 12 e 35 — e o 12 é o único perto dos 5 V.
+- **5 V no 2 e terra no 6.** Aqui a escolha é livre: todos os pinos de 5 V do header são o mesmo
+  trilho, e todos os de terra são o mesmo plano. O 2 e o 6 foram escolhidos por serem fáceis de
+  contar, não por diferença elétrica. O 4 serve de 5 V igual, e o 14 de terra igual.
 
 GPIO18 foi escolhido por dois motivos: é PWM por hardware na Pi 4, e já aparece no esquemático do
 projeto sem função atribuída — não está no banco de 16 entradas de sensores
